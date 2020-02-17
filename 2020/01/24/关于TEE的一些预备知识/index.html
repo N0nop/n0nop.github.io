@@ -1,8 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>关于TEE的一些预备知识 | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
-</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">关于TEE的一些预备知识</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/">2020-01-24</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/LearningNotes/">LearningNotes</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><blockquote>
-<p>常见缩略词：</p>
-</blockquote>
-<ul>
+</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">关于TEE的一些预备知识</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/">2020-01-24</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/LearningNotes/">LearningNotes</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><h3 id="常见缩略词："><a href="#常见缩略词：" class="headerlink" title="常见缩略词："></a>常见缩略词：</h3><ul>
 <li><b>REE</b>: Rich Execution Environment</li>
 <li><b>TEE</b>: Trusted Execution Environment</li>
 <li><b>OP-TEE</b>: Open Portable Trusted Execution Environment</li>
@@ -10,6 +7,7 @@
 <li><b>RPK</b>: Real-Time Kernel Protection</li>
 <li><b>PKM</b>: Periodic Kernel Measurement</li>
 <li><b>SMC</b>: Secure Monitor Call</li>
+<li><b>SCM</b>: Secure Channel Manager</li>
 <li><b>ATF</b>: ARM-Trusted-Firmware </li>
 <li><b>OTA</b>: Over-The-Air</li>
 <li><b>FIQ</b>: Fast Interrupt Request (Internal)</li>
@@ -20,10 +18,7 @@
 <li><b>TCB</b>: Trusted Computing Base</li>
 <li><b>HIEE</b>: Hardware-assisted Isolated Execution Environments</li>
 </ul>
-<blockquote>
-<p>不同架构下或不同应用中的TEE (Real Product)</p>
-</blockquote>
-<ul>
+<h3 id="不同架构下或不同应用中的TEE-Real-Product"><a href="#不同架构下或不同应用中的TEE-Real-Product" class="headerlink" title="不同架构下或不同应用中的TEE (Real Product)"></a>不同架构下或不同应用中的TEE (Real Product)</h3><ul>
 <li>TPM (Trusted Platform Module)</li>
 <li></li>
 <li>ARM TrustZone</li>
@@ -39,6 +34,48 @@
 <li>Apple Secure Enclave</li>
 <li>Apple T2</li>
 </ul>
+<h3 id="ARM-TrustZone-Exception-Levels"><a href="#ARM-TrustZone-Exception-Levels" class="headerlink" title="ARM TrustZone Exception Levels"></a>ARM TrustZone Exception Levels</h3><p><img src="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/ARM_TrustZone.png" alt="ARM TrustZone Exception Levels"></p>
+<h3 id="TrustZone-attack-surface"><a href="#TrustZone-attack-surface" class="headerlink" title="TrustZone attack surface"></a>TrustZone attack surface</h3><ul>
+<li>The handler of messages addressed directly to the monitor.<blockquote>
+<p>函数<code>tzbsp_es_is_activated</code>存在漏洞，允许在任意指定地址（包括TrustZone monitor和 kernel）写入一个0（DWORD），可实现在EL3中执行任意代码。</p>
+</blockquote>
+</li>
+<li>Third-party applications (trustlets) running in TrustZone.<blockquote>
+<p>由<code>tz_otp</code>提供的<code>otp_resync_account</code>函数中存在<code>BLE</code>指令（有符号比较），导致传入负数参数时，分支指令总会跳转到包含<code>memcpy</code>函数的特定分支中，并且该<code>memcpy</code>函数的<code>length</code>和<code>src</code>参数都由攻击者提供，因此可以导致栈溢出漏洞，从而实现在Secure World EL0的情况下实现任意代码执行。</p>
+</blockquote>
+</li>
+<li>The Secure Boot component, which may allow code execution before the loading of the TrustZone and thus the ability to subvert the TrustZone itself.</li>
+</ul>
+<h3 id="Syscall-calls-as-data-for-fuzzing"><a href="#Syscall-calls-as-data-for-fuzzing" class="headerlink" title="Syscall calls as data(for fuzzing)"></a>Syscall calls as data(for fuzzing)</h3><h4 id="参数类型："><a href="#参数类型：" class="headerlink" title="参数类型："></a>参数类型：</h4><pre><code class="C">typedef enum {
+    ARG_NONE,
+    ARG_VALUE_NULL,
+    ARG_VALUE_8,
+    ARG_VALUE_16,
+    ARG_VALUE_32,
+    ARG_VALUE_64,
+    ARG_BUFFER_ALLOC,
+    ARG_BUFFER_REF,
+    ARG_BUFFER_DEREF32,
+    ARG_BUFFER_DEREF64,
+    ARG_DATA_SHARED,
+    ARG_DATA_PRIVATE,
+    ARG_RETURN_VALUE,
+    ARG_TYPE_MAX
+} svc_arg_type_t;</code></pre>
+<h4 id="举例"><a href="#举例" class="headerlink" title="举例:"></a>举例:</h4><pre><code>00000000: 0100 0000 4a00 0000 1800 0001 1000 0000 ....J...........
+00000010: ff00 0000 0000 0000 0a48 656c 6c6f 204e .........Hello N
+00000020: 756c 6c63 6f6e 2100 ullcon!.</code></pre><blockquote>
+<p>小端数据，如dead beef的值为0xefbeadde</p>
+</blockquote>
+<ul>
+<li><code>0x0-0x3</code>bytes: syscall id == 0x00000001</li>
+<li><code>0x4-0x7</code>bytes: arguments type == 0x0000004a(一个nibble代表一个参数，顺序从低到高)</li>
+<li><code>0x8-0xB</code>bytes: arg1，buffer类型参数的偏移和长度，0x010 00018前3bits表示长度为0x10，后5bits表示偏移为0x18</li>
+<li><code>0xC-0xF</code>bytes: arg2, _int32类型参数的值，0x00000010即值为0x10</li>
+<li><code>0x10-0x17</code>bytes: 表示分隔，固定值</li>
+<li><code>0x18-0x27</code>bytes: 对应字符串参数</li>
+</ul>
+<h4 id="再举例："><a href="#再举例：" class="headerlink" title="再举例："></a>再举例：</h4><p><img src="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/syscall_data.png" alt="syscall data"></p>
 </div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">Nop</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/01/24/%E5%85%B3%E4%BA%8ETEE%E7%9A%84%E4%B8%80%E4%BA%9B%E9%A2%84%E5%A4%87%E7%9F%A5%E8%AF%86/">http://n0nop.com/2020/01/24/关于TEE的一些预备知识/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://n0nop.com">Nop的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tag"></i><a href="/tags/TrustZone/">TrustZone</a></span></div></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/02/07/pwn-heap-melody-center/">&lt; pwn heap: melody_center</a></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Nop</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
 if (search_path.length == 0) {
     search_path = 'search.xml';
