@@ -5,13 +5,13 @@
       "loglevel": "warning"
     },
     "inbound": {
-      "port": 10000, //(此端口与nginx配置相关)
+      "port": 10000, //(此端口与apache/nginx配置相关)
       "listen": "127.0.0.1",
       "protocol": "vmess",
       "settings": {
         "clients": [
           {
-            "id": "461aad1f-687c-4188-9abc-80073a618ca3", //你的UUID， 此ID需与客户端保持一致
+            "id": "119dfa60-4335-4fdd-b181-69e377b872a5", //你的UUID， 此ID需与客户端保持一致
             "level": 1,
             "alterId": 64 //此ID也需与客户端保持一致
           }
@@ -20,7 +20,7 @@
      "streamSettings":{
         "network": "ws",
         "wsSettings": {
-             "path": "/ray" //与nginx配置相关
+             "path": "/ray" //与apache/nginx配置相关
         }
      }
     },
