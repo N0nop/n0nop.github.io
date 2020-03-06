@@ -1,6 +1,9 @@
 <!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>pwn heap: melody_center | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
 </head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">pwn heap: melody_center</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/02/07/pwn-heap-melody-center/">2020-02-07</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Writeup/">Writeup</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>第一次接触house of orange + unsorted bin attack + IO_FILE的堆题，大佬们秒的题我硬是做了两三天才搞出来，结果远程打通了反而本地没打通，本地的问题就先放一放以后再解决了。</p>
-<h3 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h3><p>保护全开，题目给了四个功能：</p>
+<blockquote>
+<p>题目描述 </p>
+</blockquote>
+<p>保护全开，题目给了四个功能：</p>
 <pre><code>1. Create                      
 2. Edit                        
 3. Show                        
@@ -19,7 +22,10 @@
               |                          +----+----+
               +------------------------&gt; |    |    |
                                          +----+----+</code></pre><p><br>Edit功能可以修改chunk_2中的数据，由于size可以重新给定，这里存在一个堆溢出可以利用。该功能限制使用1次。<br><br>Show功能用来输出chunk_2中的数据。该功能限制使用2次。<br><br>Exit就是调用exit(0)（用不上）</p>
-<h3 id="利用思路"><a href="#利用思路" class="headerlink" title="利用思路"></a>利用思路</h3><ul>
+<blockquote>
+<p>利用思路 </p>
+</blockquote>
+<ul>
 <li><p>题目没有提供free函数，需要利用house of orange得到一个unsorted bin</p>
 </li>
 <li><p>由于题目提供的输入函数没有在字符串末尾补0，可以利用这一点leak出libc的基址（unsorted bin-&gt;bk)</p>
@@ -50,7 +56,10 @@ _IO_default_finish (fp, 0);
 </ol>
 </li>
 </ul>
-<h3 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h3><pre><code class="python">def create(size, content, _217, _108):
+<blockquote>
+<p>exp </p>
+</blockquote>
+<pre><code class="python">def create(size, content, _217, _108):
     p.sendlineafter(&quot;Your choice:&quot;, &quot;1&quot;)
     p.sendlineafter(&quot;Size of Heap: &quot;, str(size))
     p.sendafter(&quot;Content: &quot;, content)
@@ -171,12 +180,18 @@ success(&quot;system: &quot; + hex(system))
 success(&quot;str_bin_sh: &quot; + hex(str_bin_sh))
 
 p.interactive()</code></pre>
-<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><ol>
+<blockquote>
+<p>小结 </p>
+</blockquote>
+<ol>
 <li>在触发malloc_printerr之后，size=0x60的unsorted bin是怎么进入到small bin的机制还不是很清楚</li>
 <li>除了利用<code>_IO_str_finish</code>之外，还可以利用<code>_IO_str_overflow</code>，不过好像稍微复杂一点，没有尝试</li>
 <li>glibc==2.24的情况下利用IO_FILE结构体攻击的方法不限于此种，还有其他利用方法没有尝试</li>
 </ol>
-<h3 id="相关链接"><a href="#相关链接" class="headerlink" title="相关链接"></a>相关链接</h3><p>学习了其他大佬们的文章以及<a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/exploit-in-libc2.24-zh/" target="_blank" rel="noopener">CTF wiki</a></p>
+<blockquote>
+<p>相关链接 </p>
+</blockquote>
+<p>学习了其他大佬们的文章以及<a href="https://ctf-wiki.github.io/ctf-wiki/pwn/linux/io_file/exploit-in-libc2.24-zh/" target="_blank" rel="noopener">CTF wiki</a></p>
 <ol>
 <li><a href="https://xz.aliyun.com/t/5579" target="_blank" rel="noopener">https://xz.aliyun.com/t/5579</a></li>
 <li><a href="https://www.jianshu.com/p/1e45b785efc1" target="_blank" rel="noopener">https://www.jianshu.com/p/1e45b785efc1</a></li>
