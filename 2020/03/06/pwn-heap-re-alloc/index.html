@@ -75,7 +75,7 @@ tcache_get (size_t tc_idx)
 }</code></pre>
 <p>当chunk被free到tcache中时，<code>key</code>会被置为第一个chunk的地址，也就是tcache的结构chunk。当chunk从tcache中取出来时，<code>key</code>会被设置成NULL。总而言之，就是通过<code>key</code>来表明这个chunk是否在tcache中。<br><br>而这个<code>key</code>也是libc2.29中提供的对tcache的额外的检查，即在将一个chunk放入tcache时，会检查该chunk的<code>key</code>是否等于tcache结构体的地址，如果是，则进一步检查tcache中是否已有地址相同的chunk，从而触发double free的检查机制。<br><br>然而仍然有绕过检查的方法，就是<code>key</code>不等于tcache结构体的位置即可，而这往往需要配合uaf或者chunk overlap同时利用才能做到。</p>
 <blockquote>
-<p><code>realloc(ptr, size)</code>函数</p>
+<p>realloc(ptr, size)函数</p>
 </blockquote>
 <p>总的来说，realloc函数在size不同的情况下，可以达到malloc，edit，free三种功能：</p>
 <ol>
@@ -176,6 +176,7 @@ success(&quot;libc_system: &quot; + hex(libc_system))
 p.interactive()</code></pre>
 <h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><ul>
 <li>将<code>atoll</code>改为<code>printf</code>确实是神奇的姿势（我没遇到过），从这个思路上看，貌似还可以引入本来不存在的漏洞来利用。</li>
+<li>调试的时候gef好像有点问题，peda可以用。</li>
 </ul>
 <h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><ol>
 <li><a href="https://www.anquanke.com/post/id/194960" target="_blank" rel="noopener">https://www.anquanke.com/post/id/194960</a></li>
