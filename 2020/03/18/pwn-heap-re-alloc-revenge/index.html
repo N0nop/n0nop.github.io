@@ -119,12 +119,12 @@ _IO_write_base = 0x7fXXXXXXXX00;</code></pre>
   malloc_printerr (&quot;double free or corruption (!prev)&quot;);</code></pre>
 </li>
 <li>此外，由于后续的操作需要保持unsorted bin中和tcache bin中同时存在该伪造的unsorted bin，从而能从该tcache中分配到位于<code>stdout</code>结构体的内存，所以要在前面提到的<code>free(remainder)</code>形成的tcache bin初形成该chunk的double free，从而在分配该处的chunk时仍能将它保留在tcache中。<pre><code>tcache bin ==&gt; +--------+ &lt;--victim_chunk                      tcache bin ==&gt; +--------+&lt;--same victim_chunk
-             |        |                   after malloc                      |        |
-             +--------+&lt;--+            ===================&gt;                 +--------+
-             |fd |    |   |                                                 |        |
-             +--------+   |                                                 +--------+
-               |          |
-               +----------+</code></pre></li>
+               |        |                   after malloc                      |        |
+               +--------+&lt;--+            ===================&gt;                 +--------+
+               |fd |    |   |                                                 |        |
+               +--------+   |                                                 +--------+
+                 |          |
+                 +----------+</code></pre></li>
 <li>进一步地，由于<code>alloc</code>会对输入地字符串强制添加末尾<code>\x00</code>，从而会将上一步中提到的double free链（也就是该tache bin的fd）的低字节覆盖为<code>\x00</code>，这里需要将该chunk的地址保持为低字节是<code>\x00</code>，从而即使低字节被覆盖也不影响double free链，而做法就是在最开始得时候分配一定size的chunk并free到tcache中去（其实这里的chunk在最后的exploite也会用到，因为那时unsorted bin已经被破坏了，不能分配tcache或者fastbin中没有的chunk，否则会造成从unsorted bin中取而报错）。</li>
 <li>在伪造好相应的chunk后，分配并释放到unsorted bin中，再用uaf进行partial overwrite <code>unsorted bin-&gt;fd</code>为<code>stdout</code>(bruteforce 4 bits)，然后再从相应tcache bin中取出该chunk，使得tcache bin指向stdout<pre><code class="shell">tcache bin ==&gt; +--------+ &lt;--victim_chunk             |
              |        |                               |
