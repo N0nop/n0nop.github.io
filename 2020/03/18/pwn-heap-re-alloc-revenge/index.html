@@ -126,26 +126,38 @@ _IO_write_base = 0x7fXXXXXXXX00;</code></pre>
                |          |
                +----------+</code></pre></li>
 <li>进一步地，由于<code>alloc</code>会对输入地字符串强制添加末尾<code>\x00</code>，从而会将上一步中提到的double free链（也就是该tache bin的fd）的低字节覆盖为<code>\x00</code>，这里需要将该chunk的地址保持为低字节是<code>\x00</code>，从而即使低字节被覆盖也不影响double free链，而做法就是在最开始得时候分配一定size的chunk并free到tcache中去（其实这里的chunk在最后的exploite也会用到，因为那时unsorted bin已经被破坏了，不能分配tcache或者fastbin中没有的chunk，否则会造成从unsorted bin中取而报错）。</li>
-<li>在伪造好相应的chunk后，分配并释放到unsorted bin中，再用uaf进行partial overwrite <code>unsorted bin-&gt;fd</code>为<code>stdout</code>(bruteforce 4 bits)，然后再从相应tcache bin中取出该chunk，使得tcache bin指向stdout<br>```<br>tcache bin ==&gt; +——–+ &lt;–victim_chunk            |<pre><code>         |        |                            |
-         +--------+                            |
-         |fd |    |                            |
-         +--------+                            |
-           |                                   |
-           +----------&gt; +--------+ &lt;--stdout   |
-                        |_flags  |             |
-                        +--------+             |
-                        |        |             |
-                        +--------+             |   after malloc</code></pre></li>
+<li>在伪造好相应的chunk后，分配并释放到unsorted bin中，再用uaf进行partial overwrite <code>unsorted bin-&gt;fd</code>为<code>stdout</code>(bruteforce 4 bits)，然后再从相应tcache bin中取出该chunk，使得tcache bin指向stdout<pre><code class="shell">tcache bin ==&gt; +--------+ &lt;--victim_chunk             |
+             |        |                               |
+             +--------+                               |
+             |fd |    |                               |
+             +--------+                               |
+               |                                      |
+               +----------&gt; +--------+ &lt;--stdout      |
+                            |_flags  |                |
+                            +--------+                |
+                            |        |                |
+                            +--------+                |   after malloc
+----------------------------------------------------- +  =============&gt; tcache bin ==&gt; +--------+ &lt;--stdout
+unsorted bin ==&gt; +--------+ &lt;--same victim_chunk      |                                |_flags  |
+               |        |                             |                                +--------+
+               +--------+                             |                                |        |
+               |fd | bk |--------&gt; main_arena         |                                +--------+        
+               +--------+                             |                         
+                 |                                    |
+                 +----------&gt; +--------+ &lt;--stdout    |
+                              |_flags  |              |
+                              +--------+              |
+                              |        |              |
+                              +--------+              |                  </code></pre>
+</li>
+<li>这个时候只要分配stdout出的chunk就能修改相应的stdout结构体，达到输出数据从而leak libc的目的。</li>
+<li>之后因为unsorted bin被破坏的缘故，并且仅能使用一个heap进行exploite（另一个heap不能被free，否则会报错）和只能通过bins中已有的chunk进行利用，分配到<code>__realloc_hook</code>处的chunk，将<code>__realloc_hook</code>改为<code>malloc</code>，再将<code>__malloc_hook</code>改为<code>one_gadget</code>（为了调整栈帧，使得<code>[rsp + 0x70] == NULL</code>。</li>
+<li>触发<code>realloc</code>来getshell。</li>
 </ul>
-<p>—————————————————–+  ==============&gt;  tcache bin ==&gt; +——–+ &lt;–stdout<br>unsorted bin ==&gt; +——–+ &lt;–same victim_chunk     |                                  |_flags  |<br>                 |        |                          |                                  +——–+<br>                 +——–+                          |                                  |        |<br>                 |fd | bk |——–&gt; main_arena      |                                  +——–+<br>                 +——–+                          |<br>                   |                                 |<br>                   +———-&gt; +——–+ &lt;–stdout |<br>                                |_flags  |           |<br>                                +——–+           |<br>                                |        |           |<br>                                +——–+           |                  </p>
-<pre><code>+ 这个时候只要分配stdout出的chunk就能修改相应的stdout结构体，达到输出数据从而leak libc的目的。
-+ 之后因为unsorted bin被破坏的缘故，并且仅能使用一个heap进行exploite（另一个heap不能被free，否则会报错）和只能通过bins中已有的chunk进行利用，分配到`__realloc_hook`处的chunk，将`__realloc_hook`改为`malloc`，再将`__malloc_hook`改为`one_gadget`（为了调整栈帧，使得`[rsp + 0x70] == NULL`。
-+ 触发`realloc`来getshell。
-
-&gt; exp
-
-```python
-# context.log_level = &quot;debug&quot;
+<blockquote>
+<p>exp</p>
+</blockquote>
+<pre><code class="python"># context.log_level = &quot;debug&quot;
 
 def alloc(index, size, data):
     p.sendlineafter(&quot;Your choice: &quot;, &quot;1&quot;)
@@ -300,7 +312,8 @@ realloc(1, 0, &quot;&quot;)
 # p.sendline(&quot;cat /home/re-alloc_revenge/flag&quot;)
 # print(p.recv())
 
-p.interactive()</code></pre><blockquote>
+p.interactive()</code></pre>
+<blockquote>
 <p>小结</p>
 </blockquote>
 <ul>
