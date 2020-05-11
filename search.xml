@@ -845,7 +845,7 @@
   <entry>
     <title>网鼎杯 第一场: pwn</title>
     <url>/2020/05/11/%E7%BD%91%E9%BC%8E%E6%9D%AF-%E7%AC%AC%E4%B8%80%E5%9C%BA-pwn/</url>
-    <content><![CDATA[<p>兴致满满地开始比赛，骂骂咧咧地结束比赛，这个不给libc也太难受了。全程下来只做了一个Boom1，另外两个被队里TTX大哥做了。赛后看了下Boom2，也挺简单的，但是faster0是个AutoPwn，之前地De1CTF有个code runner应该也是类似的，暂且先记录一下大佬的wp，以后学习。</p>
+    <content><![CDATA[<p>兴致满满地开始比赛，骂骂咧咧地结束比赛，这个不给libc也太难受了。全程下来只做了一个Boom1，另外两个被队里TTX大哥做了。赛后看了下Boom2，也挺简单的，但是faster0是个AutoPwn，之前的De1CTF有个code runner应该也是类似的，暂且先记录一下大佬的wp，以后学习。</p>
 <a id="more"></a>
 
 <h1 id="Boom1"><a href="#Boom1" class="headerlink" title="Boom1"></a>Boom1</h1><h2 id="题目描述"><a href="#题目描述" class="headerlink" title="题目描述"></a>题目描述</h2><p>代码略长，花了点时间逆向之后发现，其实是一个VM pwn，接受类C代码，其实从binary开始分配各种text，symbol，stack等segment可以看出来点，那个sub_B70只是存一些保留字，解析8，16，10进制数，后面应该是命令分析相关的，没有深入分析了，大概的逻辑懂了就行。</p>
