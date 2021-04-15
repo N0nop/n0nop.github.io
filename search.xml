@@ -2305,7 +2305,9 @@
         <category>LearningNotes</category>
       </categories>
       <tags>
-        <tag>-- CTF -- Windows -- pwn</tag>
+        <tag>CTF</tag>
+        <tag>pwn</tag>
+        <tag>Windows</tag>
       </tags>
   </entry>
 </search>
